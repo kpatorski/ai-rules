@@ -79,7 +79,13 @@ See [rules/safe-refactoring.md](rules/safe-refactoring.md)
 
 ---
 
-## 9. Final Rule
+## 9. Java Backend Rules
+
+See [rules/java-backend.md](rules/java-backend.md)
+
+---
+
+## 10. Final Rule
 
 If something violates these rules:
 
