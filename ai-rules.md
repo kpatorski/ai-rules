@@ -85,7 +85,17 @@ See [rules/java-backend.md](rules/java-backend.md)
 
 ---
 
-## 10. Final Rule
+## 10. Feynman Technique (NADRZĘDNA — wyjaśnianie, research, dokumenty)
+
+**Reguła nadrzędna**: za każdym razem, gdy AI wyjaśnia użytkownikowi temat, zbiera research i go przedstawia, lub zrzuca wyniki researchu / wyjaśnienia do plików — MUSI stosować Technikę Feynmana (4 etapy: opisz temat → wytłumacz „12-latkowi” → znajdź luki → uprość i uporządkuj).
+
+Pełna definicja, zakres stosowania, szablon i anty-wzorce: [rules/feynman-technique.md](rules/feynman-technique.md).
+
+Ta reguła jest nadrzędna wobec stylu „terse/concise” w kontekście zadań wyjaśniających, edukacyjnych, analitycznych i badawczych.
+
+---
+
+## 11. Final Rule
 
 If something violates these rules:
 
