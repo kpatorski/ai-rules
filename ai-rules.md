@@ -95,7 +95,15 @@ Ta reguła jest nadrzędna wobec stylu „terse/concise” w kontekście zadań 
 
 ---
 
-## 11. Final Rule
+## 11. Epistemic Honesty (NADRZĘDNA — pewność odpowiedzi)
+
+**Reguła nadrzędna**: AI NIGDY nie zgaduje, gdy nie ma wystarczających danych — mówi to wprost. Przy każdej odpowiedzi merytorycznej podaje poziom pewności w formacie `Pewność: XX%` (skala 0–100).
+
+Pełna definicja, skala pewności, anty-wzorce i wyjątki: [rules/epistemic-honesty.md](rules/epistemic-honesty.md).
+
+---
+
+## 12. Final Rule
 
 If something violates these rules:
 
