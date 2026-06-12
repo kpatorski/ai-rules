@@ -1,114 +1,37 @@
-# AI RULES (FULL + ENFORCEMENT MODE)
+# AI Rules
 
-## 🔴 CRITICAL: RULE ENFORCEMENT
+## 🔴 Enforcement
 
-These rules are **MANDATORY**, not optional guidelines.
-
-The AI agent MUST:
-- follow all rules in this file strictly
-- follow all referenced rules strictly
-- respect local project rules
-- stop when a rule cannot be followed safely
-- explain any necessary deviation explicitly
-
-If rules conflict:
-1. prefer the **more restrictive rule**
-2. prefer **local project rules over global rules**
-3. preserve the **intent** of the rule, not only its wording
+All rules are **MANDATORY**. When rules conflict: prefer the more restrictive rule. Local project rules (`.claude`, `.clinerules`, `.cline`, `.gemini`) override global rules — preserve their intent, not just their wording.
 
 ---
 
-## 1. General Principles
+## General Rules
 
-Whenever the AI agent performs any task, the rules defined in this file **and all referenced files MUST be followed**.
+Apply to **every task and response**.
 
-Additionally, rules located in project subdirectories MUST also be respected.
-
-Relevant directories:
-- `.claude`
-- `.clinerules`
-- `.cline`
-- `.gemini`
-
-These rules form a **hierarchical system**:
-- global rules define the baseline
-- local rules may refine or narrow behavior
-- local rules override global rules when both apply
+- [rules/feynman-technique.md](rules/feynman-technique.md) — Feynman Technique for explanations, research, and knowledge synthesis; overrides terse/concise style in educational and analytical tasks
+- [rules/epistemic-honesty.md](rules/epistemic-honesty.md) — Epistemic honesty: admit uncertainty, provide confidence as `Pewność: XX%` on every substantive answer
+- [rules/no-guessing-and-confidence.md](rules/no-guessing-and-confidence.md) — No guessing: never invent facts; append explicit confidence score (0–100%) on every non-trivial claim
+- [rules/resercher-rule.md](rules/resercher-rule.md) — Researcher rule: back every factual claim with an explicit, cited source (doc link, file path, command output)
 
 ---
 
-## 2. Working with Code
+## Coding Rules
 
-See [rules/working-with-code.md](rules/working-with-code.md)
+Apply **only when the task involves writing, editing, reviewing, or reasoning about code**.
 
----
-
-## 3. Clean Code
-
-See [rules/clean-code.md](rules/clean-code.md)
-
----
-
-## 4. Testing
-
-See [rules/testing.md](rules/testing.md)
+- [rules/coding/working-with-code.md](rules/coding/working-with-code.md) — TDD-first workflow, safe edit discipline, and general code-change process
+- [rules/coding/clean-code.md](rules/coding/clean-code.md) — Clean code principles: encapsulation, naming, single responsibility, readability
+- [rules/coding/testing.md](rules/coding/testing.md) — Testing standards: TDD, test structure, coverage expectations
+- [rules/coding/architecture.md](rules/coding/architecture.md) — Architecture guidelines: DDD principles and layering rules
+- [rules/coding/domain-examples.md](rules/coding/domain-examples.md) — Domain model examples from Deskify/Votify projects for reference
+- [rules/coding/anti-patterns.md](rules/coding/anti-patterns.md) — AI-specific anti-patterns to detect and avoid in generated code
+- [rules/coding/safe-refactoring.md](rules/coding/safe-refactoring.md) — Safe refactoring: treat code changes as safety-critical; step-by-step discipline
+- [rules/coding/java-backend.md](rules/coding/java-backend.md) — Java backend conventions derived from Votify and Deskify projects
 
 ---
 
-## 5. Architecture
+## Final Rule
 
-See [rules/architecture.md](rules/architecture.md)
-
----
-
-## 6. Domain Examples
-
-See [rules/domain-examples.md](rules/domain-examples.md)
-
----
-
-## 7. Anti-Patterns for AI
-
-See [rules/anti-patterns.md](rules/anti-patterns.md)
-
----
-
-## 8. Safe Refactoring Rules
-
-See [rules/safe-refactoring.md](rules/safe-refactoring.md)
-
----
-
-## 9. Java Backend Rules
-
-See [rules/java-backend.md](rules/java-backend.md)
-
----
-
-## 10. Feynman Technique (NADRZĘDNA — wyjaśnianie, research, dokumenty)
-
-**Reguła nadrzędna**: za każdym razem, gdy AI wyjaśnia użytkownikowi temat, zbiera research i go przedstawia, lub zrzuca wyniki researchu / wyjaśnienia do plików — MUSI stosować Technikę Feynmana (4 etapy: opisz temat → wytłumacz „12-latkowi” → znajdź luki → uprość i uporządkuj).
-
-Pełna definicja, zakres stosowania, szablon i anty-wzorce: [rules/feynman-technique.md](rules/feynman-technique.md).
-
-Ta reguła jest nadrzędna wobec stylu „terse/concise” w kontekście zadań wyjaśniających, edukacyjnych, analitycznych i badawczych.
-
----
-
-## 11. Epistemic Honesty (NADRZĘDNA — pewność odpowiedzi)
-
-**Reguła nadrzędna**: AI NIGDY nie zgaduje, gdy nie ma wystarczających danych — mówi to wprost. Przy każdej odpowiedzi merytorycznej podaje poziom pewności w formacie `Pewność: XX%` (skala 0–100).
-
-Pełna definicja, skala pewności, anty-wzorce i wyjątki: [rules/epistemic-honesty.md](rules/epistemic-honesty.md).
-
----
-
-## 12. Final Rule
-
-If something violates these rules:
-
-- STOP
-- FIX the issue
-- DO NOT proceed while the project is in a broken or unsafe state
-
-These rules are STRICT and ENFORCED.
+If something violates these rules: **STOP — FIX — do not proceed** while the project is in a broken or unsafe state.
