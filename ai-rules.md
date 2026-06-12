@@ -13,7 +13,7 @@ Apply to **every task and response**.
 - [rules/feynman-technique.md](rules/feynman-technique.md) — Feynman Technique for explanations, research, and knowledge synthesis; overrides terse/concise style in educational and analytical tasks
 - [rules/epistemic-honesty.md](rules/epistemic-honesty.md) — Epistemic honesty: admit uncertainty, provide confidence as `Pewność: XX%` on every substantive answer
 - [rules/no-guessing-and-confidence.md](rules/no-guessing-and-confidence.md) — No guessing: never invent facts; append explicit confidence score (0–100%) on every non-trivial claim
-- [rules/resercher-rule.md](rules/resercher-rule.md) — Researcher rule: back every factual claim with an explicit, cited source (doc link, file path, command output)
+- [rules/researcher-rule.md](rules/researcher-rule.md) — Researcher rule: back every factual claim with an explicit, cited source (doc link, file path, command output)
 
 ---
 
