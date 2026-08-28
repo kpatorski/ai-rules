@@ -8,18 +8,29 @@ All rules are **MANDATORY**. When rules conflict: prefer the more restrictive ru
 
 ## General Rules
 
-Apply to **every task and response**.
+Apply to **every task and response**. These are non-coding rules and are **imported in full**
+below (`@`-imports), so Claude sees their complete text in every new session — not just the
+one-line summaries.
 
 - [rules/feynman-technique.md](rules/feynman-technique.md) — Feynman Technique for explanations, research, and knowledge synthesis; overrides terse/concise style in educational and analytical tasks
 - [rules/epistemic-honesty.md](rules/epistemic-honesty.md) — Epistemic honesty: admit uncertainty, provide confidence as `Pewność: XX%` on every substantive answer
 - [rules/no-guessing-and-confidence.md](rules/no-guessing-and-confidence.md) — No guessing: never invent facts; append explicit confidence score (0–100%) on every non-trivial claim
 - [rules/researcher-rule.md](rules/researcher-rule.md) — Researcher rule: back every factual claim with an explicit, cited source (doc link, file path, command output)
 
+### Full text (auto-imported — do not remove the lines below)
+
+@~/.ai/rules/feynman-technique.md
+@~/.ai/rules/epistemic-honesty.md
+@~/.ai/rules/no-guessing-and-confidence.md
+@~/.ai/rules/researcher-rule.md
+
 ---
 
 ## Coding Rules
 
 Apply **only when the task involves writing, editing, reviewing, or reasoning about code**.
+Intentionally **linked, not imported** — open the relevant file on demand when a coding task
+starts, to keep the always-on context small.
 
 - [rules/coding/working-with-code.md](rules/coding/working-with-code.md) — TDD-first workflow, safe edit discipline, and general code-change process
 - [rules/coding/clean-code.md](rules/coding/clean-code.md) — Clean code principles: encapsulation, naming, single responsibility, readability
