@@ -22,7 +22,7 @@ Bare assertions ("Spring does X", "Argo handles Y this way") without any of the 
 
 ## Combine with confidence
 
-Per `no-guessing-and-confidence.md`, append a confidence score. The score reflects how directly the source verifies the claim:
+Per `epistemic-honesty.md`, append a confidence score. The score reflects how directly the source verifies the claim:
 
 - **95–100%** — direct quote or specific section verified in this turn.
 - **75–94%** — source supports the claim but interpretation was involved.

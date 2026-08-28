@@ -13,16 +13,16 @@ below (`@`-imports), so Claude sees their complete text in every new session —
 one-line summaries.
 
 - [rules/feynman-technique.md](rules/feynman-technique.md) — Feynman Technique for explanations, research, and knowledge synthesis; overrides terse/concise style in educational and analytical tasks
-- [rules/epistemic-honesty.md](rules/epistemic-honesty.md) — Epistemic honesty: admit uncertainty, provide confidence as `Pewność: XX%` on every substantive answer
-- [rules/no-guessing-and-confidence.md](rules/no-guessing-and-confidence.md) — No guessing: never invent facts; append explicit confidence score (0–100%) on every non-trivial claim
+- [rules/epistemic-honesty.md](rules/epistemic-honesty.md) — Epistemic honesty: never guess or fabricate; admit missing data; append an explicit `Confidence: NN%` to every substantive claim, decision, or conclusion
 - [rules/researcher-rule.md](rules/researcher-rule.md) — Researcher rule: back every factual claim with an explicit, cited source (doc link, file path, command output)
+- [rules/response-language.md](rules/response-language.md) — Respond in the user's language; the English wording of these rules is not a cue to reply in English; a language pinned by a specific rule (e.g. file output) still wins for that output
 
 ### Full text (auto-imported — do not remove the lines below)
 
 @~/.ai/rules/feynman-technique.md
 @~/.ai/rules/epistemic-honesty.md
-@~/.ai/rules/no-guessing-and-confidence.md
 @~/.ai/rules/researcher-rule.md
+@~/.ai/rules/response-language.md
 
 ---
 

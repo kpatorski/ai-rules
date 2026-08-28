@@ -1,99 +1,114 @@
-# Technika Feynmana — Nadrzędna Reguła Wyjaśniania
+# Feynman Technique — Governing Rule for Explanations
 
-## 🔴 STATUS: NADRZĘDNA, OBOWIĄZKOWA
+## 🔴 STATUS: GOVERNING, MANDATORY
 
-Ta reguła jest **nadrzędna** wobec stylu wyjaśniania w innych regułach. Stosuje się ją **zawsze**, gdy AI:
-- tłumaczy użytkownikowi jakikolwiek temat (kod, koncept, błąd, technologię, decyzję),
-- zbiera research, a następnie przedstawia wyniki,
-- zapisuje wyniki researchu lub wyjaśnienia do plików (np. `*.md`, notatki, podsumowania, dokumenty),
-- streszcza dokumentację, artykuły, dyskusje lub analizy,
-- odpowiada na pytanie zaczynające się od „wyjaśnij…”, „opisz…”, „dlaczego…”, „jak działa…”, „co to jest…”.
+This rule **overrides** the explanation style of other rules. It applies **whenever** the AI:
+- explains any topic to the user (code, concept, error, technology, decision),
+- gathers research and then presents the findings,
+- writes research results or explanations to files (e.g. `*.md`, notes, summaries, documents),
+- summarizes documentation, articles, discussions, or analyses,
+- answers a question that starts with "explain…", "describe…", "why…", "how does… work",
+  "what is…".
 
-Jeśli odpowiedź **nie spełnia** tej reguły — STOP, popraw, dopiero potem pokaż wynik użytkownikowi.
-
----
-
-## Czym jest Technika Feynmana
-
-Technika Feynmana to czteroetapowa metoda zdobywania i przekazywania głębokiego zrozumienia. Opiera się na założeniu, że prawdziwe zrozumienie wykracza poza znajomość nazw i definicji — objawia się zdolnością do prostego wytłumaczenia zagadnienia osobie postronnej.
+If the answer **does not satisfy** this rule — STOP, fix it, and only then show the result to
+the user.
 
 ---
 
-## Cztery etapy
+## What the Feynman Technique is
 
-### 1. Wybierz temat i opisz go
-- Na początku jasno nazwij zagadnienie (jedno zdanie / nagłówek).
-- Wypisz wszystko, co już wiadomo na ten temat — fakty, definicje, kontekst, źródła.
-- Dodawaj nowe informacje w miarę ich zgłębiania (research → notatki → struktura).
-
-### 2. Wytłumacz to „dziecku” (12-latkowi)
-- Używaj **prostego języka** — żadnego niepotrzebnego żargonu.
-- Każdy termin techniczny, którego nie da się uniknąć, **musi** mieć krótką definicję obok pierwszego użycia.
-- **Twórz analogie** do codziennych zjawisk (kuchnia, ruch uliczny, biuro, gry, dom).
-- Pisz krótkimi zdaniami. Jedna myśl = jedno zdanie.
-- Strukturyzuj: od ogółu do szczegółu, od „co” → „dlaczego” → „jak”.
-
-### 3. Zidentyfikuj luki w wiedzy
-- Każde miejsce, w którym musisz uciec się do żargonu, fachowego cytatu lub mglistego sformułowania — to **luka**.
-- Każde „to skomplikowane” lub „w skrócie X” bez wyjaśnienia — to luka.
-- Luki **wypisz wprost** w notatkach roboczych (nie w finalnym tekście dla użytkownika, chyba że proszono o transparentność).
-- Wróć do źródeł, dokumentacji, kodu i **uzupełnij** luki przed pokazaniem wyniku.
-
-### 4. Uprość i uporządkuj
-- Po uzupełnieniu luk **ponownie zredaguj** wyjaśnienie.
-- Usuń powtórzenia, niepotrzebne zastrzeżenia, „warstwy ostrożności”.
-- Sprawdź, czy całość czyta się płynnie bez zaglądania do źródeł.
-- Iteruj, aż wyjaśnienie będzie krótkie, proste i logiczne.
+The Feynman Technique is a four-step method for gaining and passing on deep understanding. It
+rests on the idea that real understanding goes beyond knowing names and definitions — it shows
+up as the ability to explain a topic simply to an outsider.
 
 ---
 
-## Praktyczny szablon stosowania
+## The four steps
 
-Gdy reguła ma zastosowanie, struktura odpowiedzi / pliku powinna wyglądać tak:
+### 1. Pick the topic and describe it
+- Start by naming the subject clearly (one sentence / a heading).
+- Write down everything already known about it — facts, definitions, context, sources.
+- Add new information as you dig deeper (research → notes → structure).
+
+### 2. Explain it to a "child" (a 12-year-old)
+- Use **plain language** — no unnecessary jargon.
+- Every unavoidable technical term **must** get a short definition next to its first use.
+- **Build analogies** to everyday things (kitchen, traffic, the office, games, the home).
+- Write short sentences. One thought = one sentence.
+- Structure it: from general to specific, from "what" → "why" → "how".
+
+### 3. Identify the gaps in your knowledge
+- Any spot where you fall back on jargon, an expert quotation, or a vague phrase — that is a
+  **gap**.
+- Any "it's complicated" or "in short, X" without an actual explanation — that is a gap.
+- Write the gaps out explicitly in your working notes (not in the final text for the user,
+  unless transparency was requested).
+- Go back to the sources, documentation, and code, and **close** the gaps before showing the
+  result.
+
+### 4. Simplify and tidy up
+- Once the gaps are closed, **rewrite** the explanation.
+- Remove repetition, needless caveats, "layers of caution".
+- Check that the whole thing reads smoothly without consulting the sources.
+- Iterate until the explanation is short, simple, and logical.
+
+---
+
+## Practical template
+
+When the rule applies, the response / file should be structured like this:
 
 ```
-# <Temat — jedno zdanie>
+# <Topic — one sentence>
 
-## TL;DR (1–3 zdania, język 12-latka)
-<najprostsze możliwe streszczenie>
+## TL;DR (1–3 sentences, 12-year-old language)
+<the simplest possible summary>
 
-## Analogia
-<porównanie do codziennego zjawiska>
+## Analogy
+<comparison to an everyday thing>
 
-## Jak to działa (krok po kroku, prosty język)
+## How it works (step by step, plain language)
 1. ...
 2. ...
 3. ...
 
-## Pojęcia techniczne (jeśli niezbędne)
-- **<termin>** — <definicja w 1 zdaniu>
+## Technical terms (only if unavoidable)
+- **<term>** — <one-sentence definition>
 
-## Skąd to wiem / źródła
-- <plik / link / dokument>
+## How I know this / sources
+- <file / link / document>
 
-## (Opcjonalnie) Luki / niepewności
-- <czego nie udało się dociągnąć i dlaczego>
+## (Optional) Gaps / uncertainties
+- <what could not be pinned down, and why>
 ```
 
-Szablon jest **wskazówką**, nie sztywnym formatem — dostosuj sekcje do skali pytania. Dla krótkich odpowiedzi wystarczy „TL;DR + Analogia + Jak to działa”.
+The template is a **guide**, not a rigid format — adapt the sections to the size of the
+question. For short answers, "TL;DR + Analogy + How it works" is enough.
 
 ---
 
-## Zakazy (anty-wzorce)
+## Prohibitions (anti-patterns)
 
-- ❌ Nie wklejaj surowych fragmentów dokumentacji bez przetrawienia.
-- ❌ Nie używaj żargonu, którego nie definiujesz.
-- ❌ Nie pisz „jak to powszechnie wiadomo…”, „w uproszczeniu…” bez faktycznego uproszczenia.
-- ❌ Nie ukrywaj luk w wiedzy za zawiłym językiem — to dokładne przeciwieństwo metody Feynmana.
-- ❌ Nie kopiuj odpowiedzi modelu LLM/Wikipedii bez weryfikacji i uproszczenia.
+- ❌ Don't paste raw documentation fragments without digesting them.
+- ❌ Don't use jargon you don't define.
+- ❌ Don't write "as is commonly known…" or "to simplify…" without an actual simplification.
+- ❌ Don't hide knowledge gaps behind convoluted language — that is the exact opposite of the
+  method.
+- ❌ Don't copy an LLM/Wikipedia answer without verifying and simplifying it.
 
 ---
 
-## Pierwszeństwo
+## Precedence
 
-Ta reguła jest **nadrzędna** wobec stylu „terse / concise” w innych regułach **tylko w kontekście wyjaśniania**. Jeśli użytkownik pyta o konkret typu „zwróć ścieżkę pliku” — odpowiedz krótko, technika Feynmana nie ma zastosowania. Zasada uruchamia się przy zadaniach **edukacyjnych, wyjaśniających, analitycznych, badawczych**.
+This rule **overrides** the "terse / concise" style of other rules **only in the context of
+explaining**. If the user asks for something specific like "return the file path" — answer
+briefly; the Feynman Technique does not apply. It kicks in for **educational, explanatory,
+analytical, and research** tasks.
 
-W razie konfliktu z innymi regułami — patrz hierarchia w `ai-rules.md`:
-1. bardziej restrykcyjna reguła wygrywa,
-2. lokalne reguły projektu wygrywają z globalnymi,
-3. liczy się intencja, nie tylko litera reguły.
+This rule is about **structure and clarity, not language** — apply it in whatever language the
+conversation is happening in (see `response-language.md`).
+
+On conflict with other rules — see the hierarchy in `ai-rules.md`:
+1. the more restrictive rule wins,
+2. local project rules beat global ones,
+3. intent matters, not just the letter of the rule.
