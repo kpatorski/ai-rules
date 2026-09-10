@@ -16,6 +16,8 @@ one-line summaries.
 - [rules/epistemic-honesty.md](rules/epistemic-honesty.md) — Epistemic honesty: never guess or fabricate; admit missing data; append an explicit `Confidence: NN%` to every substantive claim, decision, or conclusion
 - [rules/researcher-rule.md](rules/researcher-rule.md) — Researcher rule: back every factual claim with an explicit, cited source (doc link, file path, command output)
 - [rules/response-language.md](rules/response-language.md) — Respond in the user's language; the English wording of these rules is not a cue to reply in English; a language pinned by a specific rule (e.g. file output) still wins for that output
+- [rules/markdown-tables.md](rules/markdown-tables.md) — Markdown tables: always emit the column-aligned/padded ("many spaces") style — user reads source with preview off and prefers it, and it keeps IntelliJ's "Incorrect table formatting" inspection quiet (leading+trailing pipes, matching column counts, full-width `-` delimiter row, blank lines around)
+- [rules/markdown-line-length.md](rules/markdown-line-length.md) — Markdown line length: wrap prose at max 120 columns (not 80); tables, code fences, URLs and headings are exempt; reflow a paragraph to 120 after editing it
 
 ### Full text (auto-imported — do not remove the lines below)
 
@@ -23,6 +25,8 @@ one-line summaries.
 @~/.ai/rules/epistemic-honesty.md
 @~/.ai/rules/researcher-rule.md
 @~/.ai/rules/response-language.md
+@~/.ai/rules/markdown-tables.md
+@~/.ai/rules/markdown-line-length.md
 
 ---
 
