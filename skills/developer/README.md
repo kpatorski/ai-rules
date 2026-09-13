@@ -22,8 +22,9 @@ Invoke with `/developer <task>` or a trigger phrase ("add a use case", "let's TD
 2. **Dispatch** — match the task to a `scenario`, build the plan from its `procedure`.
 3. **Walk the plan** — step by step, applying the style's rulesets/heuristics, stopping at every
    `checkpoint` to confirm direction.
-4. **Persist** — progress goes to a per-task `coding-session-<slug>.md` in the working directory,
-   so one task can span many sessions (resume by re-invoking).
+4. **Persist** — progress goes to a per-task `coding-session-<slug>.md` under `.claude/sessions/` in the
+   project (not the project root, so it never clutters `git status`), so one task can span many sessions
+   (resume by re-invoking). First use in a project offers to add `.claude/sessions/` to `.gitignore`.
 
 ## Styles
 

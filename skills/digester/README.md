@@ -23,7 +23,8 @@ Invoke with `/digester <input>` or a trigger phrase ("digest these requirements"
 2. **Dispatch** — match the input to `scenario-digest-input`, run `digest-requirements`.
 3. **Extract section by section** — each batch of Given/When/Then rules stops for confirmation before the next.
 4. **Write** `business-rules.md` — one `~~~rule` block per rule, grouped by input section.
-5. **Persist** — progress goes to `digest-session-<slug>.md` in the working directory; resumable.
+5. **Persist** — progress goes to `digest-session-<slug>.md` under `.claude/sessions/` in the project (not the
+   project root); resumable. First use in a project offers to add `.claude/sessions/` to `.gitignore`.
 
 ## Downstream
 

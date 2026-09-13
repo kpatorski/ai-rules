@@ -26,7 +26,8 @@ Invoke with `/analyst <input>` or a trigger phrase ("analyze these requirements"
    per-spec drafting → open questions → finalize. Every building block stops for confirmation.
 4. **Write** `specs/NNN-slug.md` files (Context / Acceptance criteria / Out of scope / Open questions) plus a
    `specs/README.md` index.
-5. **Persist** — progress goes to `analysis-session-<slug>.md` in the working directory; resumable.
+5. **Persist** — progress goes to `analysis-session-<slug>.md` under `.claude/sessions/` in the project (not
+   the project root); resumable. First use in a project offers to add `.claude/sessions/` to `.gitignore`.
 
 ## Downstream
 

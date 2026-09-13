@@ -7,8 +7,9 @@ description: >
   `business-rules.md` of Given/When/Then rules — and derives events, aggregates, commands, views, use cases and
   bounded contexts, stopping at every checkpoint. Turns the accepted use cases into `specs/NNN-slug.md` files
   whose acceptance criteria carry the underlying business rules verbatim, ready for a tool like `developer` (or
-  a human) to pick up. Progress persists to `analysis-session-<slug>.md`. Trigger: "/analyst", "analyze these
-  requirements", "run event storming on this", "turn this into specs", "resume the analysis".
+  a human) to pick up. Progress persists to `analysis-session-<slug>.md` under `.claude/sessions/` in the
+  project. Trigger: "/analyst", "analyze these requirements", "run event storming on this", "turn this into
+  specs", "resume the analysis".
 argument-hint: "<input file, URL, or text> [rules=<path to business-rules.md>] [style=<name|path>] [session=<path>]"
 ---
 
@@ -53,11 +54,16 @@ format and how to write your own: `spec-style-TEMPLATE.md`.
 
 ## `analysis-session-<slug>.md` — the state file
 
-One file per analysis run, in the working directory. Holds: input source(s) (raw + rules file if any),
-`restate-understanding`'s confirmed summary, the event-storming building blocks as they're confirmed (events,
-their rules, aggregates, commands, views, use cases, bounded contexts), the candidate spec list, per-spec draft
-status, the open-questions log, and `Next`. Mirrors `coding-session-<slug>.md` / `digest-session-<slug>.md`.
-`session=<path>` overrides the filename. English regardless of conversation language; kept current turn by turn.
+One file per analysis run, under `.claude/sessions/` in the project (i.e.
+`.claude/sessions/analysis-session-<slug>.md`) — not the project root, so it never clutters `git status`. Holds:
+input source(s) (raw + rules file if any), `restate-understanding`'s confirmed summary, the event-storming
+building blocks as they're confirmed (events, their rules, aggregates, commands, views, use cases, bounded
+contexts), the candidate spec list, per-spec draft status, the open-questions log, and `Next`. Mirrors
+`coding-session-<slug>.md` / `digest-session-<slug>.md`. `session=<path>` overrides the location entirely.
+English regardless of conversation language; kept current turn by turn.
+
+**First use in a project:** check whether `.claude/sessions/` is covered by `.gitignore`. If not, say so and
+offer to add a `.claude/sessions/` line.
 
 ## Execution model
 
@@ -115,9 +121,10 @@ Open questions. `specs/README.md` indexes them (id, title, status, shape).
 
 ## Resuming
 
-On invocation with an existing `analysis-session-<slug>.md` for this input (or `session=` naming one): read it
-in full, state in one or two lines where things stand (which building blocks are confirmed, current step, what's
-parked as an open question), re-announce the resolved style, and ask whether to resume from the current step.
+Look in `.claude/sessions/` for `analysis-session-*.md`. On invocation with a match for this input (or `session=`
+naming one directly): read it in full, state in one or two lines where things stand (which building blocks are
+confirmed, current step, what's parked as an open question), re-announce the resolved style, and ask whether to
+resume from the current step. Several matches and none named — list them and ask, as with style selection.
 
 ## Notes
 

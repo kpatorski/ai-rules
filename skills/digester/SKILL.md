@@ -5,8 +5,9 @@ description: >
   loop — extracted section by section, each batch confirmed before the next, never invented. Reads a structured
   `digest-style` file for the developer's own extraction process. Writes `business-rules.md`, grouped by input
   section, which the `analyst` skill (or any other reader) can consume as authoritative input. Progress persists
-  to `digest-session-<slug>.md` so one digest can span many sessions. Trigger: "/digester", "digest these
-  requirements", "extract business rules", "turn this into given/when/then", "resume the digest".
+  to `digest-session-<slug>.md` under `.claude/sessions/` in the project, so one digest can span many sessions.
+  Trigger: "/digester", "digest these requirements", "extract business rules", "turn this into given/when/then",
+  "resume the digest".
 argument-hint: "<input file, URL, or text> [style=<name|path>] [session=<path to digest-session file>]"
 ---
 
@@ -45,9 +46,11 @@ overrides or adds. Same entry format as `coding-style` / `spec-style`: a fenced 
 
 ## `digest-session-<slug>.md` — the state file
 
-One file per digest run, in the working directory. Mirrors `coding-session-<slug>.md` /
+One file per digest run, under `.claude/sessions/` in the project (i.e. `.claude/sessions/digest-session-<slug>.md`)
+— not the project root, so it never clutters `git status`. Mirrors `coding-session-<slug>.md` /
 `analysis-session-<slug>.md`: input source, the input's sections, per-section extraction status, the checkpoint
-log, and `Next`. `session=<path>` overrides the filename. Written in English regardless of conversation language;
+log, and `Next`. `session=<path>` overrides the location entirely. Written in English regardless of conversation
+language; first use in a project should check `.gitignore` covers `.claude/sessions/` and offer to add it if not;
 kept current in the same turn as the event it records.
 
 ## Execution model
@@ -104,9 +107,10 @@ authoritative optional input (see its `SKILL.md`), but nothing here assumes `ana
 
 ## Resuming
 
-On invocation with an existing `digest-session-<slug>.md` for this input (or `session=` naming one): read it in
-full, state in one or two lines where things stand (which sections are done, which is next), re-announce the
-resolved style, and ask whether to resume from the current section or somewhere else.
+Look in `.claude/sessions/` for `digest-session-*.md`. On a match for this input (or `session=` naming one
+directly): read it in full, state in one or two lines where things stand (which sections are done, which is
+next), re-announce the resolved style, and ask whether to resume from the current section or somewhere else.
+Several matches and none named — list them and ask, as with style selection.
 
 ## Notes
 

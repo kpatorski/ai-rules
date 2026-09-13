@@ -5,10 +5,10 @@ description: >
   Reads a structured `coding-style` file (the developer's own process, encoded as scenario / procedure / step /
   checkpoint entries), matches the task to a scenario, and walks its procedure step by step — stopping at every
   checkpoint to confirm direction with the developer. Supports several named styles (per language, or several per
-  language) selected per run. Progress is persisted to a per-task `coding-session-<slug>.md` in the working
-  directory so one task can span many sessions. Trigger: "/developer", "work in my style", "add a use case",
-  "let's TDD this", "drive this change with my coding style", "resume the coding session", "continue the developer
-  loop".
+  language) selected per run. Progress is persisted to a per-task `coding-session-<slug>.md` under
+  `.claude/sessions/` in the project, so one task can span many Claude sessions. Trigger: "/developer", "work in
+  my style", "add a use case", "let's TDD this", "drive this change with my coding style", "resume the coding
+  session", "continue the developer loop".
 argument-hint: "<task description> [style=<name|path>] [session=<path to coding-session file>]"
 ---
 
@@ -55,10 +55,15 @@ Each entry is a fenced `~~~entry` YAML block under a `## <kind>` section with a 
 
 ## `coding-session-<slug>.md` — the state file
 
-One file per task, in the working directory. A *task* is one run of the skill toward one goal ("add a
-`CancelReservation` use case" is one task; backfilling tests for a class spotted during it is a separate task).
-The filename slug is a short kebab-case reduction of the task statement, e.g.
-`coding-session-cancel-reservation-use-case.md`. `session=<path>` on the invocation overrides the name.
+One file per task, under `.claude/sessions/` in the project (i.e. `.claude/sessions/coding-session-<slug>.md`
+relative to the project root) — not the project root itself, so a task in progress never clutters `git status`.
+A *task* is one run of the skill toward one goal ("add a `CancelReservation` use case" is one task; backfilling
+tests for a class spotted during it is a separate task). The filename slug is a short kebab-case reduction of the
+task statement, e.g. `coding-session-cancel-reservation-use-case.md`. `session=<path>` on the invocation
+overrides the location entirely.
+
+**First use in a project:** check whether `.claude/sessions/` is covered by `.gitignore`. If not, say so and
+offer to add a `.claude/sessions/` line — this is ephemeral working state, not something to commit.
 
 The file is the single source of truth for where its task stands, across sessions. Written in English regardless of
 conversation language. It holds:
@@ -153,9 +158,10 @@ waiting.
 
 On invocation:
 
-- If `session=` is given, or exactly one unfinished `coding-session-*.md` exists, read it in full, state in one or
-  two lines where things stand (task, scenario, current step, what is parked), re-announce the resolved style, and
-  ask whether to resume from the current step or somewhere else.
+- Look in `.claude/sessions/` for `coding-session-*.md`. If `session=` is given, or exactly one unfinished file
+  exists there, read it in full, state in one or two lines where things stand (task, scenario, current step,
+  what is parked), re-announce the resolved style, and ask whether to resume from the current step or somewhere
+  else.
 - If several unfinished session files exist and none is named, list them (slug, task, current step, `Next`) and
   ask which to resume — the same "list and ask" pattern used for style selection.
 - Do not restart a scenario from the top unless asked.
