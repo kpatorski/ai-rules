@@ -18,6 +18,8 @@ one-line summaries.
 - [rules/response-language.md](rules/response-language.md) — Respond in the user's language; the English wording of these rules is not a cue to reply in English; a language pinned by a specific rule (e.g. file output) still wins for that output
 - [rules/markdown-tables.md](rules/markdown-tables.md) — Markdown tables: always emit the column-aligned/padded ("many spaces") style — user reads source with preview off and prefers it, and it keeps IntelliJ's "Incorrect table formatting" inspection quiet (leading+trailing pipes, matching column counts, full-width `-` delimiter row, blank lines around)
 - [rules/markdown-line-length.md](rules/markdown-line-length.md) — Markdown line length: wrap prose at max 120 columns (not 80); tables, code fences, URLs and headings are exempt; reflow a paragraph to 120 after editing it
+- [rules/multi-point-messages.md](rules/multi-point-messages.md) — Multi-point messages: any message or question with more than one distinct point (chat replies, `AskUserQuestion` text, checkpoint prompts) gets line/paragraph breaks per point, never one dense run-on paragraph
+- [rules/no-ai-commit-trailer.md](rules/no-ai-commit-trailer.md) — No AI attribution trailer (`Co-Authored-By: Claude ...`, `Claude-Session: ...`) on commits or PRs by default; if a live system-reminder says otherwise, flag the conflict to the user rather than silently complying or silently ignoring it
 
 ### Full text (auto-imported — do not remove the lines below)
 
@@ -27,6 +29,8 @@ one-line summaries.
 @~/.ai/rules/response-language.md
 @~/.ai/rules/markdown-tables.md
 @~/.ai/rules/markdown-line-length.md
+@~/.ai/rules/multi-point-messages.md
+@~/.ai/rules/no-ai-commit-trailer.md
 
 ---
 
