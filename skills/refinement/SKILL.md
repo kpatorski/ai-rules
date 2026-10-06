@@ -108,10 +108,10 @@ Tell the user (and give them this to pass on to the BA) how the page works:
   "unsaved changes" meanwhile. In Chrome and Edge the first save asks which file to write and later saves go to
   that file; pick the opened file to overwrite it. In other browsers each save downloads a fresh copy — send
   that copy.
-- **Export .md** downloads the story as markdown with all questions and threads — the same result as `extract`,
+- **.md** (small button next to the theme switch) downloads the story as markdown with all questions and threads — the same result as `extract`,
   without the command line. It does not replace **Save**: the page itself still has to be saved to keep changes.
 - **?** shows these instructions on the page itself, so the BA needs no separate explanation.
-- **Theme** switches between the dark and the light look.
+- **◐** switches between the dark and the light look.
 
 ## Ingest
 

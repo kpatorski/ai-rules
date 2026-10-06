@@ -45,8 +45,14 @@
   .topbar .file { font-family: var(--mono); font-size: 13px; color: var(--heading); }
   .topbar .counts { font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 1; }
   .topbar .unsaved { font-size: 12px; color: var(--amber); }
-  .topbar input { width: 150px; }
+  .topbar input, .topbar button { height: 26px; font-size: 12px; line-height: 1; }
+  .topbar input { width: 140px; padding: 0 8px; }
   .topbar input.needed { border-color: var(--red); }
+  .topbar .group { display: flex; align-items: center; gap: 6px; }
+  .topbar .group + .group { padding-left: 12px; border-left: 1px solid var(--border); }
+  .topbar .actions button { width: 64px; padding: 0; }
+  .topbar button.icon { min-width: 26px; padding: 0 6px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .topbar button.icon:hover { color: var(--text); }
 
   /* ---- layout ---- */
   .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; max-width: 1280px; margin: 0 auto;
@@ -80,7 +86,7 @@
     border-bottom-color: var(--green); }
   .q.is-open { background: color-mix(in srgb, var(--amber) 40%, transparent); }
   .q[data-status="resolved"].is-open { background: color-mix(in srgb, var(--green) 32%, transparent); }
-  .q.q-last::after { content: attr(data-q); font: 600 10px var(--mono); vertical-align: super; margin-left: 2px;
+  .q.q-last::after { content: attr(data-label); font: 600 10px var(--mono); vertical-align: super; margin-left: 2px;
     color: var(--amber); }
   .q[data-status="resolved"].q-last::after { color: var(--green); }
   .q.flash { outline: 2px solid var(--blue); }
@@ -223,8 +229,8 @@
       h('li', {}, h('b', {}, 'Highlighted text'), ' has a question: hover to preview, click to open, click again to close.'),
       h('li', {}, 'To ask something new, ', h('b', {}, 'select text'), ' in the story and press “Ask about this”.'),
       h('li', {}, h('b', {}, 'Resolve'), ' marks a question as settled; Reopen undoes it.'),
-      h('li', {}, h('b', {}, 'Save'), ' writes your changes into this page. Send the saved file back.'),
-      h('li', {}, h('b', {}, 'Export .md'), ' downloads the story as markdown with all questions and answers.')),
+      h('li', {}, h('b', {}, 'Save'), ' is the only button you need: it writes your changes into this page. Send the saved file back.'),
+      h('li', {}, h('b', {}, '.md'), ' is optional: it downloads the story as markdown with all questions and answers.')),
     h('p', { class: 'made' }, 'Made with the ', h('code', {}, 'refinement'), ' skill for Claude Code. ',
       h('code', {}, '/refinement <file>'), ' turns markdown into this page and back.'));
 
@@ -239,11 +245,13 @@
       h('span', { class: 'file' }, source.fileName),
       counts,
       unsaved,
-      author,
-      h('button', { type: 'button', onclick: () => { help.hidden = !help.hidden; }, title: 'How this page works' }, '?'),
-      h('button', { type: 'button', onclick: exportMarkdown, title: 'Download the story with its questions' }, 'Export .md'),
-      h('button', { type: 'button', onclick: toggleTheme, title: 'Switch light / dark' }, 'Theme'),
-      h('button', { type: 'button', class: 'primary', onclick: save, title: 'Ctrl/⌘+S' }, 'Save')),
+      h('div', { class: 'group' }, author),
+      h('div', { class: 'group actions' },
+        h('button', { type: 'button', class: 'primary', onclick: save, title: 'Save this page (Ctrl/⌘+S)' }, 'Save')),
+      h('div', { class: 'group' },
+        h('button', { type: 'button', class: 'icon', onclick: exportMarkdown, title: 'Export the story as markdown, with its questions', 'aria-label': 'Export as markdown' }, '.md'),
+        h('button', { type: 'button', class: 'icon', onclick: toggleTheme, title: 'Switch light / dark', 'aria-label': 'Switch light / dark' }, '◐'),
+        h('button', { type: 'button', class: 'icon', onclick: () => { help.hidden = !help.hidden; }, title: 'How this page works', 'aria-label': 'Help' }, '?'))),
     h('div', { class: 'layout' },
       story,
       h('aside', { class: 'side' }, h('div', { class: 'side-head' }, h('h2', {}, 'Questions'), filter), entries)),
@@ -323,7 +331,7 @@
     text.atomic = Boolean(piece.atomic);
     return piece.questions.reduceRight((inner, id) => {
       const open = state.open.has(id) ? ' is-open' : '';
-      return h('span', { class: `q${open}`, 'data-q': id, 'data-status': threadOf(id).status }, inner);
+      return h('span', { class: `q${open}`, 'data-q': id, 'data-label': label(id), 'data-status': threadOf(id).status }, inner);
     }, text);
   }
 
@@ -331,6 +339,11 @@
     const safe = /^(https?:|mailto:)/i.test(node.href) || !/^[a-z][a-z0-9+.-]*:/i.test(node.href);
     if (!safe) return h('span', {}, inlineNodes(node.children));
     return h('a', { href: node.href, target: '_blank', rel: 'noopener noreferrer' }, inlineNodes(node.children));
+  }
+
+  // Questions are stored as q1, q2, …; people see them as #1, #2, ….
+  function label(id) {
+    return `#${id.slice(1)}`;
   }
 
   function threadOf(id) {
@@ -358,13 +371,13 @@
 
   function threadPanel(thread) {
     const resolved = thread.status === 'resolved';
-    const reply = h('textarea', { placeholder: 'Write a reply…', 'aria-label': `Reply to ${thread.id}` });
+    const reply = h('textarea', { placeholder: 'Write a reply…', 'aria-label': `Reply to ${label(thread.id)}` });
     reply.value = state.drafts.get(thread.id) || '';
     reply.addEventListener('input', () => state.drafts.set(thread.id, reply.value));
     const fragment = fragmentOf(thread.id);
     return h('section', { class: 'thread', 'data-thread': thread.id, 'data-status': thread.status },
       h('div', { class: 'thread-head' },
-        h('span', { class: 'tid' }, thread.id),
+        h('span', { class: 'tid' }, label(thread.id)),
         h('span', { class: `badge ${thread.status}` }, thread.status),
         h('span', { class: 'fragment' }, fragment ? `“${fragment}”` : 'the questioned text is no longer in the story'),
         h('button', { type: 'button', onclick: () => change(() => (resolved ? core.reopen : core.resolve)(state.doc, thread.id)) },
@@ -374,7 +387,7 @@
       thread.messages.length
         ? h('ol', { class: 'messages' }, thread.messages.map((m) =>
             h('li', {},
-              h('div', { class: 'meta' }, h('span', { class: 'n' }, `#${m.n}`), h('b', {}, m.author), m.at),
+              h('div', { class: 'meta' }, h('span', { class: 'n' }, `${m.n}.`), h('b', {}, m.author), m.at),
               h('div', { class: 'text' }, m.text))))
         : h('p', { class: 'none' }, 'No messages yet.'),
       h('form', { onsubmit: (event) => send(event, thread.id, reply) },
@@ -404,7 +417,7 @@
 
   function remove(thread) {
     const size = thread.messages.length;
-    if (!window.confirm(`Delete question ${thread.id} and its ${size} message${size === 1 ? '' : 's'}?`)) return;
+    if (!window.confirm(`Delete question ${label(thread.id)} and its ${size} message${size === 1 ? '' : 's'}?`)) return;
     state.open.delete(thread.id);
     state.drafts.delete(thread.id);
     change(() => core.removeQuestion(state.doc, thread.id));
@@ -452,7 +465,7 @@
       const open = state.open.has(thread.id) ? ' is-open' : '';
       return h('button', { type: 'button', class: `entry${open}`, 'data-status': thread.status, onclick: () => reveal(thread.id) },
         h('div', { class: 'line' },
-          h('span', { class: 'tid' }, thread.id),
+          h('span', { class: 'tid' }, label(thread.id)),
           h('span', { class: 'fragment' }, fragmentOf(thread.id) || 'no anchor'),
           h('span', {}, `${thread.messages.length} msg`)),
         h('div', { class: 'ask' }, first ? first.text : 'No messages yet.'),
@@ -572,7 +585,7 @@
     const first = thread.messages[0];
     const replies = thread.messages.length - 1;
     tip.replaceChildren(
-      h('div', { class: 'meta' }, `${thread.id} · ${thread.status}${first ? ` · ${first.author}` : ''}`),
+      h('div', { class: 'meta' }, `${label(thread.id)} · ${thread.status}${first ? ` · ${first.author}` : ''}`),
       h('div', { class: 'text' }, first ? clipped(first.text, 240) : 'No messages yet.'),
       h('div', { class: 'meta' }, `${replies > 0 ? `${replies} repl${replies === 1 ? 'y' : 'ies'} · ` : ''}click to open`));
     floatBelow(tip, piece.getBoundingClientRect());
