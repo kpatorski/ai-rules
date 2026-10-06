@@ -17,7 +17,7 @@ These rules apply to all Java backend services in this workspace.
 
 **Required Spring Boot starters:**
 - `spring-boot-starter-web`
-- `spring-boot-starter-data-jpa` or direct JDBC via `NamedParameterJdbcTemplate`
+- `spring-boot-starter-data-jpa` or direct JDBC (`spring-boot-starter-jdbc`)
 - `spring-boot-starter-validation`
 
 **Testing stack:**
@@ -225,7 +225,9 @@ interface ResolutionRepository extends JpaRepository<Resolution, UUID> {
 ```
 
 **When using raw JDBC** (prefer for complex queries):
-- Use `NamedParameterJdbcTemplate`
+- Use named parameters (`:name`), never positional `?`
+- Use the current Spring JDBC API for the project's Spring version, checked in its docs, not recalled from memory:
+  `JdbcClient` since Spring 6.1, `NamedParameterJdbcTemplate` before that
 - SQL as named `private static final String` constants on the repository class
 - Map rows to domain DTOs, not directly to entity classes
 

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refinement</title>
+<style>
+  /* Palette of the craftsman dashboard; the light set mirrors it. */
+  :root {
+    --bg: #1e1e1e; --panel: #252526; --panel2: #2d2d30; --border: #333; --text: #d4d4d4; --heading: #f0f0f0;
+    --green: #4ec9b0; --blue: #9cdcfe; --muted: #808080; --amber: #d7ba7d; --red: #f48771;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+      --bg: #ffffff; --panel: #f3f3f3; --panel2: #e8e8e8; --border: #d4d4d4; --text: #333333; --heading: #1e1e1e;
+      --green: #16825d; --blue: #0b62a8; --muted: #6e6e6e; --amber: #8f6a00; --red: #c4391c;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --panel: #f3f3f3; --panel2: #e8e8e8; --border: #d4d4d4; --text: #333333; --heading: #1e1e1e;
+    --green: #16825d; --blue: #0b62a8; --muted: #6e6e6e; --amber: #8f6a00; --red: #c4391c;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  a { color: var(--blue); }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { background: none; border: 1px solid var(--border); border-radius: 3px; padding: 1px 8px;
+    font-size: 12px; line-height: 1.5; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.primary { border-color: var(--green); color: var(--green); }
+  button.primary:hover { background: color-mix(in srgb, var(--green) 14%, transparent); border-color: var(--green); }
+  button.quiet { background: none; border-color: transparent; color: var(--muted); }
+  input, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; }
+  input:focus, textarea:focus { outline: none; border-color: var(--blue); }
+  textarea { width: 100%; min-height: 64px; resize: vertical; display: block; }
+
+  /* ---- top bar ---- */
+  .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 8px 20px;
+    background: var(--panel); border-bottom: 1px solid var(--border); }
+  .topbar .file { font-family: var(--mono); font-size: 13px; color: var(--heading); }
+  .topbar .counts { font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 1; }
+  .topbar .unsaved { font-size: 12px; color: var(--amber); }
+  .topbar input { width: 150px; }
+  .topbar input.needed { border-color: var(--red); }
+
+  /* ---- layout ---- */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; max-width: 1280px; margin: 0 auto;
+    padding: 24px 20px 120px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  /* ---- story ---- */
+  .story h1, .story h2, .story h3, .story h4, .story h5, .story h6 { color: var(--heading); line-height: 1.3;
+    margin: 1.4em 0 0.5em; }
+  .story h1 { font-size: 26px; } .story h2 { font-size: 21px; } .story h3 { font-size: 17px; }
+  .story h4, .story h5, .story h6 { font-size: 15px; }
+  .story > :first-child { margin-top: 0; }
+  .story p { margin: 0.7em 0; }
+  .story li > p { margin: 0.2em 0; }
+  .story ul, .story ol { padding-left: 1.7em; margin: 0.6em 0; }
+  .story code { font-family: var(--mono); font-size: 13px; color: var(--blue); }
+  .story pre { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px;
+    overflow-x: auto; white-space: pre; }
+  .story pre code { color: var(--text); }
+  .story blockquote { margin: 0.8em 0; padding: 2px 14px; border-left: 3px solid var(--border); color: var(--muted); }
+  .story hr { border: 0; border-top: 1px solid var(--border); margin: 1.4em 0; }
+  .story .table-wrap { overflow-x: auto; margin: 0.8em 0; }
+  .story table { border-collapse: collapse; }
+  .story th, .story td { border: 1px solid var(--border); padding: 5px 10px; text-align: left; vertical-align: top; }
+  .story th { background: var(--panel); color: var(--heading); }
+
+  /* ---- questioned fragments ---- */
+  .q { background: color-mix(in srgb, var(--amber) 22%, transparent); border-bottom: 2px solid var(--amber);
+    border-radius: 2px; cursor: pointer; }
+  .q[data-status="resolved"] { background: color-mix(in srgb, var(--green) 16%, transparent);
+    border-bottom-color: var(--green); }
+  .q.is-open { background: color-mix(in srgb, var(--amber) 40%, transparent); }
+  .q[data-status="resolved"].is-open { background: color-mix(in srgb, var(--green) 32%, transparent); }
+  .q.q-last::after { content: attr(data-q); font: 600 10px var(--mono); vertical-align: super; margin-left: 2px;
+    color: var(--amber); }
+  .q[data-status="resolved"].q-last::after { color: var(--green); }
+  .q.flash { outline: 2px solid var(--blue); }
+
+  /* ---- thread ---- */
+  .thread { margin: 8px 0 14px; background: var(--panel); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber); border-radius: 4px; font-size: 14px; color: var(--text);
+    white-space: normal; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .thread[data-status="resolved"] { border-left-color: var(--green); }
+  .thread-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .thread-head .tid { font: 600 13px var(--mono); color: var(--heading); }
+  .thread-head .fragment { flex: 1; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; }
+  .badge { font: 11px var(--mono); padding: 0 6px; border-radius: 8px; border: 1px solid var(--amber);
+    color: var(--amber); }
+  .badge.resolved { border-color: var(--green); color: var(--green); }
+  .messages { list-style: none; margin: 0; padding: 0; }
+  .messages li { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .messages .meta { font-size: 12px; color: var(--muted); }
+  .messages .meta .n { font-family: var(--mono); margin-right: 6px; }
+  .messages .meta b { color: var(--blue); font-weight: 600; margin-right: 6px; }
+  .messages .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .thread .none { padding: 8px 10px; color: var(--muted); margin: 0; }
+  .thread form { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .thread form .row { display: flex; align-items: center; gap: 8px; }
+  .hint { font-size: 12px; color: var(--muted); flex: 1; }
+
+  /* ---- sidebar ---- */
+  .side { position: sticky; top: 64px; align-self: start; max-height: calc(100vh - 84px); overflow-y: auto; }
+  .side-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .side-head h2 { flex: 1; margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); }
+  .side-head button.on { border-color: var(--blue); color: var(--blue); }
+  .entry { display: block; width: 100%; text-align: left; margin-bottom: 6px; padding: 7px 10px; background: var(--panel);
+    font-size: 13px;
+    border-left: 3px solid var(--amber); }
+  .entry[data-status="resolved"] { border-left-color: var(--green); opacity: 0.75; }
+  .entry.is-open { background: var(--panel2); border-color: var(--muted); border-left-color: var(--amber); opacity: 1; }
+  .entry[data-status="resolved"].is-open { border-left-color: var(--green); }
+  .entry .line { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: var(--muted); }
+  .entry .tid { font: 600 12px var(--mono); color: var(--heading); }
+  .entry .fragment { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .entry .ask { font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; }
+  .empty { color: var(--muted); font-size: 13px; }
+
+  /* ---- floating bits ---- */
+  .ask-button { position: absolute; z-index: 8; }
+  .composer { position: absolute; z-index: 9; width: min(420px, calc(100vw - 24px)); padding: 10px; background: var(--panel);
+    border: 1px solid var(--blue); border-radius: 6px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); display: flex;
+    flex-direction: column; gap: 8px; }
+  .composer .about { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; }
+  .composer .row { display: flex; gap: 8px; align-items: center; }
+  .tip { position: absolute; z-index: 7; max-width: 380px; padding: 8px 10px; background: var(--panel2);
+    border: 1px solid var(--border); border-radius: 4px; font-size: 13px; pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+  .tip .meta { font: 11px var(--mono); color: var(--muted); }
+  .tip .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .help { position: fixed; z-index: 9; top: 48px; right: 20px; width: min(400px, calc(100vw - 24px)); padding: 12px 14px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px; font-size: 13px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); }
+  .help ul { margin: 0; padding-left: 1.2em; }
+  .help li { margin: 3px 0; }
+  .help b { color: var(--heading); font-weight: 600; }
+  .help .made { margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12px;
+    color: var(--muted); }
+  .help code { font-family: var(--mono); font-size: 11.5px; color: var(--blue); }
+  .toast { position: fixed; z-index: 10; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 8px 14px;
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<!--REFINEMENT_DATA-->
+<script>/*REFINEMENT_CORE*/</script>
+<script>
+(function () {
+  'use strict';
+
+  const core = window.RefinementCore;
+  const dataElement = document.getElementById('refinement-data');
+  const source = JSON.parse(dataElement.textContent);
+  const app = document.getElementById('app');
+
+  const state = {
+    doc: core.readDocument(source.markdown),
+    open: new Set(),
+    drafts: new Map(),
+    onlyOpen: false,
+    dirty: false,
+    fileHandle: null,
+    pending: null,
+  };
+
+  function h(tag, props, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(props || {})) {
+      if (key === 'class') node.className = value;
+      else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
+      else if (value !== false && value != null) node.setAttribute(key, value === true ? '' : value);
+    }
+    node.append(...children.flat().filter((child) => child != null && child !== false));
+    return node;
+  }
+
+  function remembered(key) {
+    try {
+      return window.localStorage.getItem(key) || '';
+    } catch (unavailable) {
+      return '';
+    }
+  }
+
+  function remember(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (unavailable) {
+      /* private mode or blocked storage: the value simply is not remembered */
+    }
+  }
+
+  // ---- page skeleton -------------------------------------------------------------------------
+
+  const counts = h('span', { class: 'counts' });
+  const unsaved = h('span', { class: 'unsaved', hidden: true }, 'unsaved changes');
+  const author = h('input', { type: 'text', placeholder: 'Your name', 'aria-label': 'Your name', maxlength: '40' });
+  const story = h('main', { class: 'story' });
+  const entries = h('div', {});
+  const filter = h('button', { type: 'button', onclick: toggleFilter }, 'Open only');
+  const askButton = h('button', { class: 'ask-button primary', type: 'button', hidden: true }, 'Ask about this');
+  const composer = h('form', { class: 'composer', hidden: true });
+  const tip = h('div', { class: 'tip', hidden: true });
+  const toast = h('div', { class: 'toast', hidden: true, role: 'status' });
+  const help = h('div', { class: 'help', hidden: true },
+    h('ul', {},
+      h('li', {}, 'Type ', h('b', {}, 'your name'), ' in the top bar; it signs your messages.'),
+      h('li', {}, h('b', {}, 'Highlighted text'), ' has a question: hover to preview, click to open, click again to close.'),
+      h('li', {}, 'To ask something new, ', h('b', {}, 'select text'), ' in the story and press “Ask about this”.'),
+      h('li', {}, h('b', {}, 'Resolve'), ' marks a question as settled; Reopen undoes it.'),
+      h('li', {}, h('b', {}, 'Save'), ' writes your changes into this page. Send the saved file back.'),
+      h('li', {}, h('b', {}, 'Export .md'), ' downloads the story as markdown with all questions and answers.')),
+    h('p', { class: 'made' }, 'Made with the ', h('code', {}, 'refinement'), ' skill for Claude Code. ',
+      h('code', {}, '/refinement <file>'), ' turns markdown into this page and back.'));
+
+  author.value = remembered('refinement.author');
+  author.addEventListener('input', () => {
+    author.classList.remove('needed');
+    remember('refinement.author', author.value.trim());
+  });
+
+  app.append(
+    h('header', { class: 'topbar' },
+      h('span', { class: 'file' }, source.fileName),
+      counts,
+      unsaved,
+      author,
+      h('button', { type: 'button', onclick: () => { help.hidden = !help.hidden; }, title: 'How this page works' }, '?'),
+      h('button', { type: 'button', onclick: exportMarkdown, title: 'Download the story with its questions' }, 'Export .md'),
+      h('button', { type: 'button', onclick: toggleTheme, title: 'Switch light / dark' }, 'Theme'),
+      h('button', { type: 'button', class: 'primary', onclick: save, title: 'Ctrl/⌘+S' }, 'Save')),
+    h('div', { class: 'layout' },
+      story,
+      h('aside', { class: 'side' }, h('div', { class: 'side-head' }, h('h2', {}, 'Questions'), filter), entries)),
+    askButton,
+    composer,
+    tip,
+    help,
+    toast,
+  );
+
+  // ---- story ---------------------------------------------------------------------------------
+
+  function render() {
+    const scrolled = window.scrollY;
+    story.replaceChildren(...core.layout(state.doc).map(blockNode));
+    for (const thread of state.doc.threads) {
+      const pieces = story.querySelectorAll(`.q[data-q="${thread.id}"]`);
+      if (pieces.length) pieces[pieces.length - 1].classList.add('q-last');
+      if (state.open.has(thread.id)) placeThread(thread, pieces[0]);
+    }
+    renderEntries();
+    const open = state.doc.threads.filter((t) => t.status === 'open').length;
+    counts.textContent = `${open} open · ${state.doc.threads.length - open} resolved`;
+    unsaved.hidden = !state.dirty;
+    window.scrollTo(0, scrolled);
+  }
+
+  function blockNode(block) {
+    switch (block.type) {
+      case 'heading':
+        return h(`h${block.level}`, { 'data-inline': true }, inlineNodes(block.inline));
+      case 'code':
+        return h('pre', {}, h('code', { 'data-inline': true }, inlineNodes(block.inline)));
+      case 'rule':
+        return h('hr', {});
+      case 'quote':
+        return h('blockquote', {}, block.blocks.map(blockNode));
+      case 'list':
+        return h(block.ordered ? 'ol' : 'ul', { start: block.ordered ? String(block.start) : null },
+          block.items.map((item) => h('li', {}, item.map(blockNode))));
+      case 'table': {
+        const row = (cells, tag) => h('tr', {}, cells.map((cell) => h(tag, { 'data-inline': true }, inlineNodes(cell))));
+        return h('div', { class: 'table-wrap' },
+          h('table', {}, h('thead', {}, row(block.head, 'th')), h('tbody', {}, block.rows.map((r) => row(r, 'td')))));
+      }
+      default:
+        return h('p', { 'data-inline': true }, inlineNodes(block.inline));
+    }
+  }
+
+  function inlineNodes(nodes) {
+    return nodes.map((node) => {
+      switch (node.type) {
+        case 'text':
+          return textNode(node);
+        case 'break':
+          return h('br', {});
+        case 'strong':
+          return h('strong', {}, inlineNodes(node.children));
+        case 'em':
+          return h('em', {}, inlineNodes(node.children));
+        case 'del':
+          return h('del', {}, inlineNodes(node.children));
+        case 'code':
+          return h('code', {}, inlineNodes(node.children));
+        default:
+          return linkNode(node);
+      }
+    });
+  }
+
+  // Text nodes remember where they come from in the story, so a selection can be mapped back.
+  function textNode(piece) {
+    const text = document.createTextNode(piece.text);
+    text.storyStart = piece.start;
+    text.storyEnd = piece.end;
+    text.atomic = Boolean(piece.atomic);
+    return piece.questions.reduceRight((inner, id) => {
+      const open = state.open.has(id) ? ' is-open' : '';
+      return h('span', { class: `q${open}`, 'data-q': id, 'data-status': threadOf(id).status }, inner);
+    }, text);
+  }
+
+  function linkNode(node) {
+    const safe = /^(https?:|mailto:)/i.test(node.href) || !/^[a-z][a-z0-9+.-]*:/i.test(node.href);
+    if (!safe) return h('span', {}, inlineNodes(node.children));
+    return h('a', { href: node.href, target: '_blank', rel: 'noopener noreferrer' }, inlineNodes(node.children));
+  }
+
+  function threadOf(id) {
+    return state.doc.threads.find((t) => t.id === id);
+  }
+
+  function fragmentOf(id) {
+    const anchor = state.doc.anchors.find((a) => a.id === id);
+    return anchor ? state.doc.text.slice(anchor.start, anchor.end).replace(/\s+/g, ' ') : '';
+  }
+
+  // ---- threads -------------------------------------------------------------------------------
+
+  function placeThread(thread, firstPiece) {
+    const panel = threadPanel(thread);
+    if (!firstPiece) {
+      story.append(panel);
+      return;
+    }
+    const container = firstPiece.closest('[data-inline]');
+    let host = container.closest('.table-wrap') || (container.tagName === 'CODE' ? container.parentElement : container);
+    while (host.nextElementSibling && host.nextElementSibling.classList.contains('thread')) host = host.nextElementSibling;
+    host.after(panel);
+  }
+
+  function threadPanel(thread) {
+    const resolved = thread.status === 'resolved';
+    const reply = h('textarea', { placeholder: 'Write a reply…', 'aria-label': `Reply to ${thread.id}` });
+    reply.value = state.drafts.get(thread.id) || '';
+    reply.addEventListener('input', () => state.drafts.set(thread.id, reply.value));
+    const fragment = fragmentOf(thread.id);
+    return h('section', { class: 'thread', 'data-thread': thread.id, 'data-status': thread.status },
+      h('div', { class: 'thread-head' },
+        h('span', { class: 'tid' }, thread.id),
+        h('span', { class: `badge ${thread.status}` }, thread.status),
+        h('span', { class: 'fragment' }, fragment ? `“${fragment}”` : 'the questioned text is no longer in the story'),
+        h('button', { type: 'button', onclick: () => change(() => (resolved ? core.reopen : core.resolve)(state.doc, thread.id)) },
+          resolved ? 'Reopen' : 'Resolve'),
+        h('button', { type: 'button', class: 'quiet', onclick: () => remove(thread) }, 'Delete'),
+        h('button', { type: 'button', class: 'quiet', title: 'Collapse', onclick: () => toggle(thread.id) }, '✕')),
+      thread.messages.length
+        ? h('ol', { class: 'messages' }, thread.messages.map((m) =>
+            h('li', {},
+              h('div', { class: 'meta' }, h('span', { class: 'n' }, `#${m.n}`), h('b', {}, m.author), m.at),
+              h('div', { class: 'text' }, m.text))))
+        : h('p', { class: 'none' }, 'No messages yet.'),
+      h('form', { onsubmit: (event) => send(event, thread.id, reply) },
+        reply,
+        h('div', { class: 'row' },
+          h('span', { class: 'hint' }, 'Ctrl/⌘+Enter sends'),
+          h('button', { type: 'submit', class: 'primary' }, 'Send'))));
+  }
+
+  function toggle(id) {
+    if (state.open.has(id)) state.open.delete(id);
+    else state.open.add(id);
+    hideTip();
+    render();
+  }
+
+  function send(event, id, reply) {
+    event.preventDefault();
+    if (!signed()) return;
+    const sent = change(() => core.reply(state.doc, id, { author: author.value, at: now(), text: reply.value }));
+    if (!sent) return;
+    state.drafts.delete(id);
+    render();
+    const again = story.querySelector(`.thread[data-thread="${id}"] textarea`);
+    if (again) again.focus({ preventScroll: true });
+  }
+
+  function remove(thread) {
+    const size = thread.messages.length;
+    if (!window.confirm(`Delete question ${thread.id} and its ${size} message${size === 1 ? '' : 's'}?`)) return;
+    state.open.delete(thread.id);
+    state.drafts.delete(thread.id);
+    change(() => core.removeQuestion(state.doc, thread.id));
+  }
+
+  function change(next) {
+    try {
+      state.doc = next();
+    } catch (problem) {
+      notify(problem.message, true);
+      return false;
+    }
+    state.dirty = true;
+    render();
+    return true;
+  }
+
+  function signed() {
+    if (author.value.trim()) return true;
+    author.classList.add('needed');
+    author.focus();
+    notify('Enter your name first — it signs your messages.', true);
+    return false;
+  }
+
+  function now() {
+    const d = new Date();
+    const two = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`;
+  }
+
+  // ---- question list -------------------------------------------------------------------------
+
+  function renderEntries() {
+    const shown = state.doc.threads.filter((t) => !state.onlyOpen || t.status === 'open');
+    filter.classList.toggle('on', state.onlyOpen);
+    if (!shown.length) {
+      const none = state.doc.threads.length ? 'No open questions.' : 'Select any text in the story to ask a question.';
+      entries.replaceChildren(h('p', { class: 'empty' }, none));
+      return;
+    }
+    entries.replaceChildren(...shown.map((thread) => {
+      const first = thread.messages[0];
+      const last = thread.messages[thread.messages.length - 1];
+      const open = state.open.has(thread.id) ? ' is-open' : '';
+      return h('button', { type: 'button', class: `entry${open}`, 'data-status': thread.status, onclick: () => reveal(thread.id) },
+        h('div', { class: 'line' },
+          h('span', { class: 'tid' }, thread.id),
+          h('span', { class: 'fragment' }, fragmentOf(thread.id) || 'no anchor'),
+          h('span', {}, `${thread.messages.length} msg`)),
+        h('div', { class: 'ask' }, first ? first.text : 'No messages yet.'),
+        last && last !== first ? h('div', { class: 'line' }, `last: ${last.author} · ${last.at}`) : null);
+    }));
+  }
+
+  function toggleFilter() {
+    state.onlyOpen = !state.onlyOpen;
+    renderEntries();
+  }
+
+  // Clicking a listed question opens it and scrolls to it; clicking it again collapses it.
+  function reveal(id) {
+    if (state.open.has(id)) {
+      toggle(id);
+      return;
+    }
+    state.open.add(id);
+    render();
+    const target = story.querySelector(`.q[data-q="${id}"]`) || story.querySelector(`.thread[data-thread="${id}"]`);
+    if (!target) return;
+    target.scrollIntoView({ block: 'center' });
+    target.classList.add('flash');
+    window.setTimeout(() => target.classList.remove('flash'), 1200);
+  }
+
+  // ---- asking about a selection --------------------------------------------------------------
+
+  // The selected part of the story, limited to the paragraph/cell/heading where the selection starts.
+  function selectedFragment() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null;
+    const range = selection.getRangeAt(0);
+    const walker = document.createTreeWalker(story, NodeFilter.SHOW_TEXT);
+    let container = null;
+    let start = Infinity;
+    let end = -1;
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (node.storyStart === undefined || !range.intersectsNode(node)) continue;
+      const from = node === range.startContainer ? range.startOffset : 0;
+      const to = node === range.endContainer ? range.endOffset : node.length;
+      if (from >= to) continue;
+      const own = node.parentElement.closest('[data-inline]');
+      container = container || own;
+      if (own !== container) break;
+      start = Math.min(start, node.atomic ? node.storyStart : node.storyStart + from);
+      end = Math.max(end, node.atomic ? node.storyEnd : node.storyStart + to);
+    }
+    if (end === -1 || !state.doc.text.slice(start, end).trim()) return null;
+    return { start, end, rect: range.getBoundingClientRect() };
+  }
+
+  function offerToAsk() {
+    if (!composer.hidden) return;
+    state.pending = selectedFragment();
+    askButton.hidden = !state.pending;
+    if (state.pending) floatBelow(askButton, state.pending.rect);
+  }
+
+  function floatBelow(node, rect) {
+    node.hidden = false;
+    const left = Math.max(8, Math.min(rect.left, document.documentElement.clientWidth - node.offsetWidth - 8));
+    node.style.left = `${left + window.scrollX}px`;
+    node.style.top = `${rect.bottom + window.scrollY + 6}px`;
+  }
+
+  function openComposer() {
+    const pending = state.pending;
+    const text = h('textarea', { placeholder: 'What is unclear here?', 'aria-label': 'Your question' });
+    const about = state.doc.text.slice(pending.start, pending.end).replace(/\s+/g, ' ').trim();
+    composer.replaceChildren(
+      h('div', { class: 'about' }, `About “${about}”`),
+      text,
+      h('div', { class: 'row' },
+        h('span', { class: 'hint' }, 'Ctrl/⌘+Enter asks'),
+        h('button', { type: 'button', onclick: closeComposer }, 'Cancel'),
+        h('button', { type: 'submit', class: 'primary' }, 'Ask')));
+    composer.onsubmit = (event) => {
+      event.preventDefault();
+      if (!signed()) return;
+      const asked = change(() => core.askQuestion(state.doc, { ...pending, author: author.value, at: now(), text: text.value }));
+      if (!asked) return;
+      closeComposer();
+      state.open.add(state.doc.threads[state.doc.threads.length - 1].id);
+      render();
+    };
+    askButton.hidden = true;
+    floatBelow(composer, pending.rect);
+    text.focus({ preventScroll: true });
+  }
+
+  function closeComposer() {
+    composer.hidden = true;
+    state.pending = null;
+  }
+
+  askButton.addEventListener('mousedown', (event) => event.preventDefault());
+  askButton.addEventListener('click', openComposer);
+  document.addEventListener('mouseup', () => window.setTimeout(offerToAsk, 0));
+  document.addEventListener('keyup', (event) => {
+    if (event.shiftKey || event.key === 'Shift') offerToAsk();
+  });
+
+  // ---- hovering and clicking questioned fragments ---------------------------------------------
+
+  story.addEventListener('click', (event) => {
+    const piece = event.target.closest && event.target.closest('.q');
+    const selecting = !window.getSelection().isCollapsed;
+    if (piece && !selecting) toggle(piece.dataset.q);
+  });
+
+  story.addEventListener('mouseover', (event) => {
+    const piece = event.target.closest && event.target.closest('.q');
+    if (!piece || state.open.has(piece.dataset.q)) return;
+    const thread = threadOf(piece.dataset.q);
+    const first = thread.messages[0];
+    const replies = thread.messages.length - 1;
+    tip.replaceChildren(
+      h('div', { class: 'meta' }, `${thread.id} · ${thread.status}${first ? ` · ${first.author}` : ''}`),
+      h('div', { class: 'text' }, first ? clipped(first.text, 240) : 'No messages yet.'),
+      h('div', { class: 'meta' }, `${replies > 0 ? `${replies} repl${replies === 1 ? 'y' : 'ies'} · ` : ''}click to open`));
+    floatBelow(tip, piece.getBoundingClientRect());
+  });
+
+  story.addEventListener('mouseout', (event) => {
+    if (event.target.closest && event.target.closest('.q')) hideTip();
+  });
+
+  function hideTip() {
+    tip.hidden = true;
+  }
+
+  function clipped(text, length) {
+    return text.length > length ? `${text.slice(0, length)}…` : text;
+  }
+
+  // ---- saving --------------------------------------------------------------------------------
+
+  // The whole page again, with the current story and threads embedded instead of the loaded ones.
+  function pageHtml() {
+    const page = document.documentElement.cloneNode(true);
+    page.removeAttribute('data-theme');
+    page.querySelector('#app').replaceChildren();
+    page.querySelector('#refinement-data').textContent =
+      core.pageData({ fileName: source.fileName, markdown: core.writeDocument(state.doc) });
+    return `<!DOCTYPE html>\n${page.outerHTML}\n`;
+  }
+
+  function pageName() {
+    const opened = decodeURIComponent(window.location.pathname.split('/').pop() || '');
+    return /\.html?$/i.test(opened) ? opened : `${source.fileName.replace(/\.(md|markdown)$/i, '')}.html`;
+  }
+
+  async function save() {
+    const html = pageHtml();
+    if (window.showSaveFilePicker) {
+      try {
+        state.fileHandle = state.fileHandle || await window.showSaveFilePicker({
+          suggestedName: pageName(),
+          types: [{ description: 'Refinement page', accept: { 'text/html': ['.html'] } }],
+        });
+        const writable = await state.fileHandle.createWritable();
+        await writable.write(html);
+        await writable.close();
+        saved(`Saved to ${state.fileHandle.name}.`);
+        return;
+      } catch (problem) {
+        if (problem.name === 'AbortError') return;
+        state.fileHandle = null;
+      }
+    }
+    download(html, 'text/html', pageName());
+    saved(`Downloaded ${pageName()} — that copy holds your changes.`);
+  }
+
+  function download(content, type, name) {
+    const link = h('a', { href: URL.createObjectURL(new Blob([content], { type })), download: name });
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+  }
+
+  // The same markdown the command line would extract; it does not count as saving the page.
+  function exportMarkdown() {
+    const name = /\.(md|markdown)$/i.test(source.fileName) ? source.fileName : `${source.fileName}.md`;
+    download(core.writeDocument(state.doc), 'text/markdown', name);
+    notify(`Downloaded ${name}.`, false);
+  }
+
+  function saved(message) {
+    state.dirty = false;
+    unsaved.hidden = true;
+    notify(message, false);
+  }
+
+  function notify(message, isError) {
+    toast.textContent = message;
+    toast.classList.toggle('error', isError);
+    toast.hidden = false;
+    window.clearTimeout(notify.timer);
+    notify.timer = window.setTimeout(() => { toast.hidden = true; }, 5000);
+  }
+
+  window.addEventListener('beforeunload', (event) => {
+    if (!state.dirty) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const command = event.metaKey || event.ctrlKey;
+    if (command && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      save();
+    } else if (command && event.key === 'Enter' && event.target.form) {
+      event.target.form.requestSubmit();
+    } else if (event.key === 'Escape') {
+      closeComposer();
+      help.hidden = true;
+    }
+  });
+
+  // ---- theme ---------------------------------------------------------------------------------
+
+  function toggleTheme() {
+    const root = document.documentElement;
+    const light = root.dataset.theme
+      ? root.dataset.theme === 'light'
+      : window.matchMedia('(prefers-color-scheme: light)').matches;
+    root.dataset.theme = light ? 'dark' : 'light';
+    remember('refinement.theme', root.dataset.theme);
+  }
+
+  if (remembered('refinement.theme')) document.documentElement.dataset.theme = remembered('refinement.theme');
+  document.title = `${source.fileName} — refinement`;
+  render();
+})();
+</script>
+</body>
+</html>
