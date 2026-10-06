@@ -79,6 +79,40 @@
   .story th, .story td { border: 1px solid var(--border); padding: 5px 10px; text-align: left; vertical-align: top; }
   .story th { background: var(--panel); color: var(--heading); }
 
+  /* ---- editable blocks and their change marks ---- */
+  .story { padding-left: 76px; }
+  .unit { position: relative; }
+  /* The tools column spans the whole height of the block and reaches up to its text, so the pointer never
+     crosses a dead gap on its way to a button. */
+  .unit-tools { position: absolute; top: 0; bottom: 0; left: -76px; width: 76px; display: flex; align-items: flex-start;
+    gap: 4px; visibility: hidden; }
+  li.unit > .unit-tools { left: calc(-76px - 1.7em); width: calc(76px + 1.7em); }
+  .unit:hover > .unit-tools { visibility: visible; }
+  .unit-tools button { width: 28px; height: 28px; padding: 0; border-radius: 4px; border-color: transparent; color: var(--muted);
+    font-size: 16px; line-height: 1; }
+  .unit-tools button:hover { color: var(--heading); background: var(--panel2); border-color: var(--border); }
+  .change-bar { position: absolute; top: 2px; bottom: 2px; left: -10px; width: 4px; padding: 0; border: 0; border-radius: 2px;
+    background: var(--muted); opacity: 0.55; }
+  li.unit > .change-bar { left: calc(-10px - 1.7em); }
+  .unit.fresh > .change-bar { background: var(--blue); opacity: 1; }
+  .change-bar:hover { opacity: 1; width: 6px; }
+  .was, .source-form { margin: 6px 0 12px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 4px; font-size: 13px; }
+  .was .who, .removed-note { font-size: 12px; color: var(--muted); }
+  .was.fresh, .removed-note.fresh { border-left: 3px solid var(--blue); }
+  .was pre { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px/1.5 var(--mono);
+    background: none; border: 0; padding: 0; }
+  .was del { color: var(--red); background: color-mix(in srgb, var(--red) 14%, transparent); }
+  .was ins { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); text-decoration: none; }
+  .removed-note { display: block; width: 100%; text-align: left; margin: 4px 0; padding: 2px 8px; border-style: dashed; }
+  .removed-note.fresh { color: var(--blue); }
+  .source-form { display: flex; flex-direction: column; gap: 6px; }
+  .source-form textarea { font: 13px/1.5 var(--mono); }
+  .source-form .row { display: flex; align-items: center; gap: 8px; }
+  .messages li.fresh { box-shadow: inset 3px 0 0 var(--blue); }
+  .new-tag { font: 10px var(--mono); color: var(--blue); border: 1px solid var(--blue); border-radius: 8px; padding: 0 5px;
+    margin-left: 6px; }
+
   /* ---- questioned fragments ---- */
   .q { background: color-mix(in srgb, var(--amber) 22%, transparent); border-bottom: 2px solid var(--amber);
     border-radius: 2px; cursor: pointer; }
@@ -182,6 +216,8 @@
     dirty: false,
     fileHandle: null,
     pending: null,
+    editing: null,
+    shownBefore: new Set(),
   };
 
   function h(tag, props, ...children) {
@@ -191,7 +227,7 @@
       else if (key.startsWith('on')) node.addEventListener(key.slice(2), value);
       else if (value !== false && value != null) node.setAttribute(key, value === true ? '' : value);
     }
-    node.append(...children.flat().filter((child) => child != null && child !== false));
+    node.append(...children.flat(Infinity).filter((child) => child != null && child !== false));
     return node;
   }
 
@@ -229,6 +265,8 @@
       h('li', {}, h('b', {}, 'Highlighted text'), ' has a question: hover to preview, click to open, click again to close.'),
       h('li', {}, 'To ask something new, ', h('b', {}, 'select text'), ' in the story and press “Ask about this”.'),
       h('li', {}, h('b', {}, 'Resolve'), ' marks a question as settled; Reopen undoes it.'),
+      h('li', {}, 'To ', h('b', {}, 'change the story'), ', point at a paragraph or list item: ✎ edits it, + adds a block below it.'),
+      h('li', {}, 'A ', h('b', {}, 'bar on the left'), ' marks changed text — blue if it changed since you last saved. Click it to see what it was.'),
       h('li', {}, h('b', {}, 'Save'), ' is the only button you need: it writes your changes into this page. Send the saved file back.'),
       h('li', {}, h('b', {}, '.md'), ' is optional: it downloads the story as markdown with all questions and answers.')),
     h('p', { class: 'made' }, 'Made with the ', h('code', {}, 'refine'), ' skill for Claude Code. ',
@@ -238,6 +276,7 @@
   author.addEventListener('input', () => {
     author.classList.remove('needed');
     remember('refine.author', author.value.trim());
+    render();
   });
 
   app.append(
@@ -264,9 +303,32 @@
 
   // ---- story ---------------------------------------------------------------------------------
 
+  // What counts as new is fixed when the page opens: everything since this reader last saved.
+  // Saving during the session must not make the marks vanish while the reader is still looking.
+  const opened = source.history || core.newHistory(state.doc.text, now());
+  state.history = opened;
+
+  function reader() {
+    return author.value.trim();
+  }
+
+  function isNew(message) {
+    return core.isNewFor(opened, reader(), message);
+  }
+
   function render() {
     const scrolled = window.scrollY;
-    story.replaceChildren(...core.layout(state.doc).map(blockNode));
+    const marks = core.changeMarks(state.doc, state.history, core.referenceText(opened, reader()));
+    const units = core.units(state.doc);
+    let index = 0;
+    const unitNode = (tag, content) => unitOf(tag, index, units[index], marks.units[index++], content, marks.removed);
+    story.replaceChildren(
+      ...removedNotes(marks.removed, -1),
+      ...core.layout(state.doc).map((block) => (block.type === 'list'
+        ? h(block.ordered ? 'ol' : 'ul', { start: block.ordered ? String(block.start) : null },
+          block.items.map((item) => unitNode('li', item.map(blockNode))))
+        : unitNode('div', [blockNode(block)]))));
+    const fresh = marks.units.filter((m) => m && m.fresh).length + marks.removed.filter((r) => r.fresh).length;
     for (const thread of state.doc.threads) {
       const pieces = story.querySelectorAll(`.q[data-q="${thread.id}"]`);
       if (pieces.length) pieces[pieces.length - 1].classList.add('q-last');
@@ -274,9 +336,96 @@
     }
     renderEntries();
     const open = state.doc.threads.filter((t) => t.status === 'open').length;
-    counts.textContent = `${open} open · ${state.doc.threads.length - open} resolved`;
+    const changes = fresh ? ` · ${fresh} new change${fresh === 1 ? '' : 's'}` : '';
+    counts.textContent = `${open} open · ${state.doc.threads.length - open} resolved${changes}`;
     unsaved.hidden = !state.dirty;
     window.scrollTo(0, scrolled);
+  }
+
+  // ---- editable blocks ------------------------------------------------------------------------
+
+  function unitOf(tag, index, unit, mark, content, removed) {
+    const editing = state.editing && state.editing.unit === index ? state.editing : null;
+    const classes = ['unit', mark ? 'changed' : '', mark && mark.fresh ? 'fresh' : ''].filter(Boolean).join(' ');
+    return h(tag, { class: classes, 'data-unit': String(index) },
+      h('span', { class: 'unit-tools' },
+        h('button', { type: 'button', title: 'Edit this block', 'aria-label': 'Edit this block', onclick: () => edit(index, 'edit') }, '✎'),
+        h('button', { type: 'button', title: 'Add a block below', 'aria-label': 'Add a block below', onclick: () => edit(index, 'add') }, '+')),
+      mark ? h('button', { type: 'button', class: 'change-bar', title: `${signature(mark)} — click to see what it was`,
+        'aria-label': 'Show the previous text', onclick: () => toggleBefore(`u${index}`) }) : null,
+      editing && editing.mode === 'edit' ? sourceForm(index, unit, editing) : content,
+      mark && state.shownBefore.has(`u${index}`) ? previousText(mark, state.doc.text.slice(unit.start, unit.end)) : null,
+      editing && editing.mode === 'add' ? sourceForm(index, unit, editing) : null,
+      removedNotes(removed, index));
+  }
+
+  function signature(change) {
+    const what = { changed: 'Changed', added: 'Added', removed: 'Removed' }[change.kind || 'removed'];
+    return change.author ? `${what} by ${change.author} · ${change.at}` : `${what} just now, not saved yet`;
+  }
+
+  function previousText(mark, current) {
+    const body = mark.kind === 'added' ? null : h('pre', {}, core.diff(mark.before, current).map((part) => (part.same
+      ? mark.before.slice(part.a[0], part.a[1])
+      : [h('del', {}, mark.before.slice(part.a[0], part.a[1])), h('ins', {}, current.slice(part.b[0], part.b[1]))])));
+    return h('div', { class: `was${mark.fresh ? ' fresh' : ''}` }, h('div', { class: 'who' }, signature(mark)), body);
+  }
+
+  function removedNotes(removed, after) {
+    return removed.filter((r) => r.after === after).map((r, k) => {
+      const key = `r${after}:${k}`;
+      return h('div', {},
+        h('button', { type: 'button', class: `removed-note${r.fresh ? ' fresh' : ''}`, onclick: () => toggleBefore(key) },
+          `− a block was removed here · ${signature(r)}`),
+        state.shownBefore.has(key)
+          ? h('div', { class: `was${r.fresh ? ' fresh' : ''}` }, h('pre', {}, h('del', {}, r.text)))
+          : null);
+    });
+  }
+
+  function toggleBefore(key) {
+    if (state.shownBefore.has(key)) state.shownBefore.delete(key);
+    else state.shownBefore.add(key);
+    render();
+  }
+
+  function edit(unit, mode) {
+    state.editing = { unit, mode, draft: null };
+    render();
+    const field = story.querySelector('.source-form textarea');
+    if (field) field.focus({ preventScroll: true });
+  }
+
+  // The markdown of one block, to change it — or an empty form to write a new block after it.
+  function sourceForm(index, unit, editing) {
+    const adding = editing.mode === 'add';
+    const field = h('textarea', { 'aria-label': adding ? 'New block, in markdown' : 'This block, in markdown' });
+    field.value = editing.draft !== null ? editing.draft : adding ? unit.next : state.doc.text.slice(unit.start, unit.end);
+    field.rows = Math.max(3, field.value.split('\n').length + 1);
+    field.addEventListener('input', () => { editing.draft = field.value; });
+    const signedBy = () => ({ author: author.value, at: now() });
+    const finish = (next) => {
+      if (!signed()) return;
+      state.editing = null;
+      if (change(next)) return;
+      state.editing = { ...editing, draft: field.value };
+      render();
+    };
+    return h('form', {
+      class: 'source-form',
+      onsubmit: (event) => {
+        event.preventDefault();
+        finish(() => (adding
+          ? core.addUnitAfter(state.doc, index, field.value, signedBy())
+          : core.editUnit(state.doc, index, field.value, signedBy())));
+      },
+    },
+      field,
+      h('div', { class: 'row' },
+        h('span', { class: 'hint' }, adding ? 'Markdown · Ctrl/⌘+Enter adds' : 'Markdown · Ctrl/⌘+Enter saves the block'),
+        adding ? null : h('button', { type: 'button', class: 'quiet', onclick: () => finish(() => core.removeUnit(state.doc, index, signedBy())) }, 'Delete block'),
+        h('button', { type: 'button', onclick: () => { state.editing = null; render(); } }, 'Cancel'),
+        h('button', { type: 'submit', class: 'primary' }, adding ? 'Add' : 'Done')));
   }
 
   function blockNode(block) {
@@ -386,8 +535,9 @@
         h('button', { type: 'button', class: 'quiet', title: 'Collapse', onclick: () => toggle(thread.id) }, '✕')),
       thread.messages.length
         ? h('ol', { class: 'messages' }, thread.messages.map((m) =>
-            h('li', {},
-              h('div', { class: 'meta' }, h('span', { class: 'n' }, `${m.n}.`), h('b', {}, m.author), m.at),
+            h('li', { class: isNew(m) ? 'fresh' : '' },
+              h('div', { class: 'meta' }, h('span', { class: 'n' }, `${m.n}.`), h('b', {}, m.author), m.at,
+                isNew(m) ? h('span', { class: 'new-tag' }, 'new') : null),
               h('div', { class: 'text' }, m.text))))
         : h('p', { class: 'none' }, 'No messages yet.'),
       h('form', { onsubmit: (event) => send(event, thread.id, reply) },
@@ -424,13 +574,15 @@
   }
 
   function change(next) {
+    let changed;
     try {
-      state.doc = next();
+      changed = next();
     } catch (problem) {
       notify(problem.message, true);
       return false;
     }
-    state.dirty = true;
+    state.dirty = state.dirty || changed !== state.doc;
+    state.doc = changed;
     render();
     return true;
   }
@@ -467,6 +619,7 @@
         h('div', { class: 'line' },
           h('span', { class: 'tid' }, label(thread.id)),
           h('span', { class: 'fragment' }, fragmentOf(thread.id) || 'no anchor'),
+          thread.messages.some(isNew) ? h('span', { class: 'new-tag' }, 'new') : null,
           h('span', {}, `${thread.messages.length} msg`)),
         h('div', { class: 'ask' }, first ? first.text : 'No messages yet.'),
         last && last !== first ? h('div', { class: 'line' }, `last: ${last.author} · ${last.at}`) : null);
@@ -606,12 +759,12 @@
   // ---- saving --------------------------------------------------------------------------------
 
   // The whole page again, with the current story and threads embedded instead of the loaded ones.
-  function pageHtml() {
+  function pageHtml(history) {
     const page = document.documentElement.cloneNode(true);
     page.removeAttribute('data-theme');
     page.querySelector('#app').replaceChildren();
     page.querySelector('#refine-data').textContent =
-      core.pageData({ fileName: source.fileName, markdown: core.writeDocument(state.doc) });
+      core.pageData({ fileName: source.fileName, markdown: core.writeDocument(state.doc), history });
     return `<!DOCTYPE html>\n${page.outerHTML}\n`;
   }
 
@@ -621,7 +774,8 @@
   }
 
   async function save() {
-    const html = pageHtml();
+    const history = core.recordSave(state.history, state.doc.text, reader(), now());
+    const html = pageHtml(history);
     if (window.showSaveFilePicker) {
       try {
         state.fileHandle = state.fileHandle || await window.showSaveFilePicker({
@@ -631,6 +785,7 @@
         const writable = await state.fileHandle.createWritable();
         await writable.write(html);
         await writable.close();
+        state.history = history;
         saved(`Saved to ${state.fileHandle.name}.`);
         return;
       } catch (problem) {
@@ -639,6 +794,7 @@
       }
     }
     download(html, 'text/html', pageName());
+    state.history = history;
     saved(`Downloaded ${pageName()} — that copy holds your changes.`);
   }
 
@@ -685,6 +841,10 @@
     } else if (event.key === 'Escape') {
       closeComposer();
       help.hidden = true;
+      if (state.editing) {
+        state.editing = null;
+        render();
+      }
     }
   });
 

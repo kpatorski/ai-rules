@@ -268,10 +268,16 @@
     let i = 0;
     while (i < lines.length) {
       const laid = blockAt(anchors, lines, i);
-      if (laid.block) blocks.push(laid.block);
+      if (laid.block) blocks.push({ ...laid.block, ...span(lines, i, laid.next) });
       i = laid.next;
     }
     return blocks;
+  }
+
+  // Where the lines [from, to) sit in the story.
+  function span(lines, from, to) {
+    const last = lines[Math.min(to, lines.length) - 1];
+    return { sourceStart: lines[from].off, sourceEnd: last.off + last.text.length };
   }
 
   function blockAt(anchors, lines, i) {
@@ -336,19 +342,21 @@
     const ordered = ITEM.exec(lines[i].text)[3] !== undefined;
     const start = ordered ? Number(ITEM.exec(lines[i].text)[3]) : 1;
     const items = [];
+    const itemSpans = [];
     let j = i;
     while (j < lines.length) {
       const marker = ITEM.exec(lines[j].text);
       if (!marker || (marker[3] !== undefined) !== ordered || RULE.test(lines[j].text)) break;
       const item = itemAt(lines, j, marker);
       items.push(layoutBlocks(anchors, item.lines));
+      itemSpans.push(span(lines, j, item.next));
       j = item.next;
       const afterBlanks = skipBlank(lines, j);
       if (afterBlanks === j) continue;
       if (afterBlanks < lines.length && ITEM.test(lines[afterBlanks].text)) j = afterBlanks;
       else break;
     }
-    return { block: { type: 'list', ordered, start, items }, next: j };
+    return { block: { type: 'list', ordered, start, items, itemSpans }, next: j };
   }
 
   function itemAt(lines, i, marker) {
@@ -633,11 +641,329 @@
     return atomic ? { type: 'text', text, start, end, questions, atomic } : { type: 'text', text, start, end, questions };
   }
 
+  // ---- comparing two texts --------------------------------------------------------------------
+
+  const LINES = /[^\n]*\n|[^\n]+/g;
+  const WORDS = /\s+|[\p{L}\p{N}_]+|[^\s\p{L}\p{N}_]/gu;
+  const WORD_CHAR = /[\p{L}\p{N}_]/u;
+  const COMPARISON_LIMIT = 4000000;
+
+  // Parts covering both texts in order; each part is either the same in both or changed.
+  // Positions are { a: [from, to], b: [from, to] }. Whole words are compared, never half of one.
+  function diff(a, b) {
+    let head = 0;
+    while (head < a.length && head < b.length && a[head] === b[head]) head += 1;
+    while (head > 0 && isWordChar(a[head - 1]) && (isWordChar(a[head]) || isWordChar(b[head]))) head -= 1;
+    let tail = 0;
+    while (tail < a.length - head && tail < b.length - head && a[a.length - 1 - tail] === b[b.length - 1 - tail]) tail += 1;
+    while (tail > 0 && isWordChar(a[a.length - tail]) && (isWordChar(a[a.length - tail - 1]) || isWordChar(b[b.length - tail - 1]))) {
+      tail -= 1;
+    }
+    const middle = compared(a.slice(head, a.length - tail), b.slice(head, b.length - tail), LINES)
+      .flatMap((part) => (part.same ? [part] : refined(a.slice(head, a.length - tail), b.slice(head, b.length - tail), part)))
+      .map((part) => shifted(part, head, head));
+    const parts = [
+      { same: true, a: [0, head], b: [0, head] },
+      ...middle,
+      { same: true, a: [a.length - tail, a.length], b: [b.length - tail, b.length] },
+    ];
+    return merged(parts.filter((part) => part.a[1] > part.a[0] || part.b[1] > part.b[0]));
+  }
+
+  function isWordChar(ch) {
+    return ch !== undefined && WORD_CHAR.test(ch);
+  }
+
+  // A changed stretch of lines, compared again word by word.
+  function refined(a, b, part) {
+    return compared(a.slice(part.a[0], part.a[1]), b.slice(part.b[0], part.b[1]), WORDS)
+      .map((inner) => shifted(inner, part.a[0], part.b[0]));
+  }
+
+  function shifted(part, byA, byB) {
+    return { same: part.same, a: [part.a[0] + byA, part.a[1] + byA], b: [part.b[0] + byB, part.b[1] + byB] };
+  }
+
+  function merged(parts) {
+    const out = [];
+    for (const part of parts) {
+      const last = out[out.length - 1];
+      if (last && last.same === part.same) {
+        last.a[1] = part.a[1];
+        last.b[1] = part.b[1];
+      } else out.push({ same: part.same, a: [...part.a], b: [...part.b] });
+    }
+    return out;
+  }
+
+  function compared(a, b, pattern) {
+    const tokensA = a.match(pattern) || [];
+    const tokensB = b.match(pattern) || [];
+    const startsA = starts(tokensA);
+    const startsB = starts(tokensB);
+    return runs(tokensA, tokensB).map((run) => ({
+      same: run.same,
+      a: [startsA[run.a[0]], startsA[run.a[1]]],
+      b: [startsB[run.b[0]], startsB[run.b[1]]],
+    }));
+  }
+
+  function starts(tokens) {
+    const at = [0];
+    for (const token of tokens) at.push(at[at.length - 1] + token.length);
+    return at;
+  }
+
+  // Longest common subsequence of two lists, as alternating same/changed runs of indexes.
+  function runs(a, b) {
+    const n = a.length;
+    const m = b.length;
+    if (n === 0 && m === 0) return [];
+    if ((n + 1) * (m + 1) > COMPARISON_LIMIT) return [{ same: false, a: [0, n], b: [0, m] }];
+    const width = m + 1;
+    const common = new Int32Array((n + 1) * width);
+    for (let i = n - 1; i >= 0; i -= 1) {
+      for (let j = m - 1; j >= 0; j -= 1) {
+        common[i * width + j] = a[i] === b[j]
+          ? common[(i + 1) * width + j + 1] + 1
+          : Math.max(common[(i + 1) * width + j], common[i * width + j + 1]);
+      }
+    }
+    const out = [];
+    const add = (same, i, j, toI, toJ) => {
+      const last = out[out.length - 1];
+      if (last && last.same === same) {
+        last.a[1] = toI;
+        last.b[1] = toJ;
+      } else out.push({ same, a: [i, toI], b: [j, toJ] });
+    };
+    let i = 0;
+    let j = 0;
+    while (i < n || j < m) {
+      if (i < n && j < m && a[i] === b[j]) add(true, i, j, (i += 1), (j += 1));
+      else if (j < m && (i === n || common[i * width + j + 1] >= common[(i + 1) * width + j])) add(false, i, j, i, (j += 1));
+      else add(false, i, j, (i += 1), j);
+    }
+    return out;
+  }
+
+  // ---- editing the story ---------------------------------------------------------------------
+
+  // The blocks a person edits one at a time: every top-level block, and every item of a top-level list.
+  // `next` is the list marker a following item would start with.
+  function units(doc) {
+    const all = [];
+    for (const block of layout(doc)) {
+      if (block.type !== 'list') {
+        all.push({ start: block.sourceStart, end: block.sourceEnd, kind: 'block', next: '' });
+        continue;
+      }
+      block.itemSpans.forEach((item, k) => {
+        const next = block.ordered ? `${block.start + k + 1}. ` : '- ';
+        all.push({ start: item.sourceStart, end: item.sourceEnd, kind: 'item', next });
+      });
+    }
+    return all;
+  }
+
+  function editUnit(doc, index, markdown, by) {
+    const unit = units(doc)[index];
+    const replacement = markdown.replace(/\r\n?/g, '\n').trim();
+    if (!replacement) return removeUnit(doc, index, by);
+    return changeText(doc, doc.text.slice(0, unit.start) + replacement + doc.text.slice(unit.end), by);
+  }
+
+  // Takes the block out together with one of the gaps around it — the smaller one, so that the
+  // neighbours stay as separate as they were.
+  function removeUnit(doc, index, by) {
+    const all = units(doc);
+    const unit = all[index];
+    const before = all[index - 1];
+    const after = all[index + 1];
+    const gapBefore = before ? doc.text.slice(before.end, unit.start) : null;
+    const gapAfter = after ? doc.text.slice(unit.end, after.start) : null;
+    const keepGapBefore = gapAfter !== null && (gapBefore === null || gapBefore.length >= gapAfter.length);
+    const from = keepGapBefore ? unit.start : before ? before.end : unit.start;
+    const to = keepGapBefore ? after.start : unit.end;
+    return changeText(doc, doc.text.slice(0, from) + doc.text.slice(to), by);
+  }
+
+  function addUnitAfter(doc, index, markdown, by) {
+    const all = units(doc);
+    const unit = all[index];
+    const addition = markdown.replace(/\r\n?/g, '\n').trim();
+    if (!addition) return doc;
+    const continuesList = unit.kind === 'item' && ITEM.test(addition);
+    const after = all[index + 1];
+    const splitsList = !continuesList && after && doc.text.slice(unit.end, after.start) === '\n';
+    const inserted = (continuesList ? '\n' : '\n\n') + addition + (splitsList ? '\n' : '');
+    return changeText(doc, doc.text.slice(0, unit.end) + inserted + doc.text.slice(unit.end), by);
+  }
+
+  // Replaces the story text. Questions follow the words they were asked about, and every thread
+  // whose words or surrounding block were edited gets a note saying so — an edit is often the answer.
+  function changeText(doc, text, { author, at }) {
+    const next = text.replace(/\r\n?/g, '\n').trimEnd();
+    if (next === doc.text) return doc;
+    if (!String(author || '').trim()) throw new Error('Enter your name before editing.');
+    const parts = diff(doc.text, next);
+    const blocksBefore = units(doc);
+    const blocksAfter = units({ text: next, anchors: [], threads: [] });
+    const anchors = [];
+    let threads = doc.threads;
+    for (const anchor of doc.anchors) {
+      const moved = movedRange(parts, next, anchor);
+      const was = doc.text.slice(anchor.start, anchor.end);
+      const is = moved ? next.slice(moved.start, moved.end) : '';
+      if (moved) anchors.push({ id: anchor.id, start: moved.start, end: moved.end });
+      const note = editNote(was, is, moved && blockAround(doc.text, blocksBefore, anchor) === blockAround(next, blocksAfter, moved));
+      if (note) threads = threads.map((t) => (t.id === anchor.id ? withMessage(t, author, at, note) : t));
+    }
+    return { text: next, anchors: anchors.sort(outerFirst), threads };
+  }
+
+  function editNote(was, is, sameBlock) {
+    if (!is) return `✎ removed the text: “${quoted(was)}”`;
+    if (is !== was) return `✎ changed the text: “${quoted(was)}” → “${quoted(is)}”`;
+    return sameBlock ? null : `✎ edited the text around “${quoted(was)}”`;
+  }
+
+  function blockAround(text, blocks, range) {
+    const block = blocks.find((b) => b.start <= range.start && range.start < b.end);
+    return block ? text.slice(block.start, block.end) : '';
+  }
+
+  // Where the questioned words are in the new text; null when they sat inside a larger stretch that
+  // was rewritten, because then nothing says which of the new words replaced them.
+  function movedRange(parts, next, anchor) {
+    const rewritten = parts.some((p) => !p.same && p.a[0] <= anchor.start && anchor.end <= p.a[1] && p.a[1] - p.a[0] > anchor.end - anchor.start);
+    return rewritten ? null : trimmedRange(next, startIn(parts, anchor.start), endIn(parts, anchor.end));
+  }
+
+  function startIn(parts, position) {
+    const part = parts.find((p) => p.a[0] <= position && position < p.a[1]);
+    if (!part) return parts.length ? parts[parts.length - 1].b[1] : 0;
+    return part.same ? part.b[0] + (position - part.a[0]) : part.b[0];
+  }
+
+  function endIn(parts, position) {
+    const part = parts.find((p) => p.a[0] < position && position <= p.a[1]);
+    if (!part) return 0;
+    return part.same ? part.b[0] + (position - part.a[0]) : part.b[1];
+  }
+
+  function trimmedRange(text, start, end) {
+    let from = start;
+    let to = end;
+    while (from < to && /\s/.test(text[from])) from += 1;
+    while (to > from && /\s/.test(text[to - 1])) to -= 1;
+    return from < to ? { start: from, end: to } : null;
+  }
+
+  function quoted(fragment) {
+    const flat = fragment.replace(/\s+/g, ' ').trim();
+    return flat.length > 160 ? `${flat.slice(0, 160)}…` : flat;
+  }
+
+  function withMessage(thread, author, at, text) {
+    return { ...thread, messages: [...thread.messages, newMessage(thread.messages.length + 1, author, at, text)] };
+  }
+
+  // ---- who changed what ----------------------------------------------------------------------
+  //
+  // The history lives only in the page. `versions[0]` is the story as first rendered; a version is
+  // added when someone saves a changed story. `seen` remembers, per person, when they last saved and
+  // which version the story was then — the point from which changes count as new for them.
+
+  function newHistory(text, at) {
+    return { versions: [{ author: null, at, text }], seen: {} };
+  }
+
+  function recordSave(history, text, author, at) {
+    const name = String(author || '').trim();
+    const versions = [...history.versions];
+    const last = versions.length - 1;
+    if (text !== versions[last].text) {
+      const othersStandOnLast = Object.entries(history.seen).some(([who, mark]) => who !== name && mark.version === last);
+      if (last > 0 && versions[last].author === name && !othersStandOnLast) versions[last] = { author: name, at, text };
+      else versions.push({ author: name, at, text });
+    }
+    const seen = name ? { ...history.seen, [name]: { at, version: versions.length - 1 } } : history.seen;
+    return { versions, seen };
+  }
+
+  // The story as the reader last saved it; for someone who never saved, the story as first rendered.
+  function referenceText(history, reader) {
+    const mark = history.seen[String(reader || '').trim()];
+    return history.versions[mark ? mark.version : 0].text;
+  }
+
+  function isNewFor(history, reader, message) {
+    const name = String(reader || '').trim();
+    if (!name || message.author === name) return false;
+    const mark = history.seen[name];
+    return !mark || message.at >= mark.at;
+  }
+
+  // Per unit of the current story: null, or how it differs from the first version, whether that is
+  // new since `reference`, what it replaced and who did it. Removed blocks are listed separately,
+  // each after the unit that now precedes its old place (-1: before everything).
+  function changeMarks(doc, history, reference) {
+    const current = units(doc).map((unit) => doc.text.slice(unit.start, unit.end));
+    const sinceReference = comparedUnits(unitTexts(reference), current);
+    const sinceFirst = comparedUnits(unitTexts(history.versions[0].text), current);
+    const marked = current.map((text, i) => {
+      const mark = sinceReference.marks[i] || sinceFirst.marks[i];
+      return mark ? { ...mark, fresh: Boolean(sinceReference.marks[i]), ...introducedBy(history, text) } : null;
+    });
+    const newlyRemoved = new Set(sinceReference.removed.map((r) => r.text));
+    const removed = [
+      ...sinceReference.removed.map((r) => ({ ...r, fresh: true })),
+      ...sinceFirst.removed.filter((r) => !newlyRemoved.has(r.text)).map((r) => ({ ...r, fresh: false })),
+    ].map((r) => ({ ...r, ...removedBy(history, r.text) }));
+    return { units: marked, removed: removed.sort((x, y) => x.after - y.after) };
+  }
+
+  function comparedUnits(before, after) {
+    const marks = after.map(() => null);
+    const removed = [];
+    for (const run of runs(before, after).filter((r) => !r.same)) {
+      const gone = before.slice(run.a[0], run.a[1]);
+      const came = run.b[1] - run.b[0];
+      for (let k = 0; k < came; k += 1) {
+        marks[run.b[0] + k] = k < gone.length ? { kind: 'changed', before: gone[k] } : { kind: 'added', before: null };
+      }
+      for (const text of gone.slice(came)) removed.push({ after: run.b[1] - 1, text });
+    }
+    return { marks, removed };
+  }
+
+  const unitTextsOf = new Map();
+
+  function unitTexts(text) {
+    if (!unitTextsOf.has(text)) {
+      if (unitTextsOf.size > 50) unitTextsOf.clear();
+      const doc = { text, anchors: [], threads: [] };
+      unitTextsOf.set(text, units(doc).map((unit) => text.slice(unit.start, unit.end)));
+    }
+    return unitTextsOf.get(text);
+  }
+
+  function introducedBy(history, text) {
+    const version = history.versions.slice(1).find((v) => unitTexts(v.text).includes(text));
+    return version ? { author: version.author, at: version.at } : { author: null, at: null };
+  }
+
+  function removedBy(history, text) {
+    const version = history.versions.find((v, k) => k > 0 && unitTexts(history.versions[k - 1].text).includes(text) && !unitTexts(v.text).includes(text));
+    return version ? { author: version.author, at: version.at } : { author: null, at: null };
+  }
+
   // ---- embedding in a page -------------------------------------------------------------------
 
   // JSON that is safe inside a script element: no "<" survives, so the story cannot close the element.
-  function pageData({ fileName, markdown }) {
-    return JSON.stringify({ format: 1, fileName, markdown }).replace(/</g, '\\u003c');
+  function pageData({ fileName, markdown, history }) {
+    return JSON.stringify({ format: 1, fileName, markdown, history }).replace(/</g, '\\u003c');
   }
 
   function dataElement(story) {
@@ -647,8 +973,8 @@
   function readPage(html) {
     const element = DATA_ELEMENT.exec(html);
     if (!element) throw new Error('Not a refine page: no embedded story found.');
-    const { fileName, markdown } = JSON.parse(element[1]);
-    return { fileName, markdown };
+    const { fileName, markdown, history } = JSON.parse(element[1]);
+    return history ? { fileName, markdown, history } : { fileName, markdown };
   }
 
   const api = {
@@ -656,6 +982,17 @@
     writeDocument,
     withoutQuestions,
     layout,
+    diff,
+    units,
+    editUnit,
+    removeUnit,
+    addUnitAfter,
+    changeText,
+    newHistory,
+    recordSave,
+    referenceText,
+    isNewFor,
+    changeMarks,
     askQuestion,
     reply,
     resolve,

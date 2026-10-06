@@ -22,12 +22,16 @@ story file**, attached to the exact words they are about, and moves the file bac
 
 1. `render` — story markdown becomes a review page.
 2. The developer opens the page, selects text, asks questions, presses **Save**.
-3. The page is sent to the BA (chat attachment, mail). The BA opens it, answers in the threads, presses **Save**,
-   sends the file back.
+3. The page is sent to the BA (chat attachment, mail). The BA opens it and answers — in the threads, or by
+   editing the story itself (changing, removing or adding blocks) — presses **Save**, sends the file back.
+   Nobody approves anybody's edits; the page only shows what changed.
 4. Steps 2–3 repeat on the same file as long as needed. A returned page can be opened and continued directly;
    no conversion is needed between rounds.
 5. `extract` — the page becomes markdown again, questions and threads included.
 6. `ingest` — the agreed answers are written into the requirements and the settled questions are removed.
+
+If the BA edits the markdown outside the page and sends that back instead, `rebase` puts the older questions
+onto the new text and marks what changed.
 
 ## File format
 
@@ -66,6 +70,7 @@ node ~/.ai/skills/refine/scripts/refine.mjs extract <page.html>          [-o <st
 node ~/.ai/skills/refine/scripts/refine.mjs strip   <story.md|page.html> [-o <clean.md>]  [--force]
 node ~/.ai/skills/refine/scripts/refine.mjs status  <story.md|page.html>
 node ~/.ai/skills/refine/scripts/refine.mjs drop    <story.md> <qN>...
+node ~/.ai/skills/refine/scripts/refine.mjs rebase  <older.md|page.html> <edited.md> [-o <page.html>] [--by <name>] [--force]
 node ~/.ai/skills/refine/scripts/refine.mjs help
 ```
 
@@ -73,6 +78,10 @@ node ~/.ai/skills/refine/scripts/refine.mjs help
 - `strip` prints the story with every anchor and the whole threads section removed.
 - `status` lists each question: id, status, line number, the questioned fragment, and all messages.
 - `drop` removes the named questions (anchor and thread) from a markdown story, in place.
+- `rebase` builds a page for a story that was edited outside the page. `older` is the last version that has the
+  questions (markdown or page), `edited` is the new text. Questions are carried onto the new text by comparing the
+  two; a thread whose words or block changed gets a `✎` note signed with `--by` (ask the user who edited the file).
+  If `edited` brings its own questions, those are kept as they are. Either way the page marks every changed block.
 
 ### Never lose answers
 
@@ -103,14 +112,29 @@ Tell the user (and give them this to pass on to the BA) how the page works:
 - To ask something new, select text and press **Ask about this**. A selection is limited to one paragraph,
   list item, heading or table cell; a wider selection is cut down to the block where it starts.
 - **Resolve** marks a thread as settled (green); **Reopen** undoes that.
+- To change the story, point at a paragraph, heading, table or list item: **✎** opens that block as markdown,
+  **+** adds a new block below it, and **Delete block** inside the editor removes it.
+- A bar on the left marks a block that was changed or added; a dashed line marks a place where a block was
+  removed. Blue means "new since you last saved", grey means older. Clicking shows the previous wording, who
+  changed it and when. New messages in threads carry a blue "new" tag by the same rule.
+- When someone edits the words a question is about, or the block around them, the thread gets an automatic
+  `✎` note ("changed the text: “old” → “new”", "edited the text around …", "removed the text: …"), so an answer
+  given by editing is still tied to its question.
 - **Save** (or Ctrl/⌘+S) is required — nothing is written to the file until then, and the bar shows
   "unsaved changes" meanwhile. In Chrome and Edge the first save asks which file to write and later saves go to
   that file; pick the opened file to overwrite it. In other browsers each save downloads a fresh copy — send
   that copy.
-- **.md** (small button next to the theme switch) downloads the story as markdown with all questions and threads — the same result as `extract`,
-  without the command line. It does not replace **Save**: the page itself still has to be saved to keep changes.
+- **.md** (small button next to the theme switch) downloads the story as markdown with all questions and threads — the
+  same result as `extract`, without the command line. It does not replace **Save**: the page itself still has to be
+  saved to keep changes.
 - **?** shows these instructions on the page itself, so the BA needs no separate explanation.
 - **◐** switches between the dark and the light look.
+
+## Change history
+
+The record of who changed which block lives only in the page. `extract` and **.md** give the current story with
+its questions and nothing else; history between markdown versions is git's job. Rendering a story again starts a
+fresh history, so continue on the returned page whenever the change marks still matter.
 
 ## Ingest
 
@@ -121,8 +145,9 @@ step that needs judgement; everything else is mechanical.
 2. Run `status`. A thread is **settled** when it is `resolved`. Report the `open` ones by id; they stay in the
    output with their anchors and threads unless the user says to ingest them too.
 3. Copy the story to `<name>.refined.md` and work only on the copy. The source story is never modified.
-4. For each settled thread, read the whole thread, then change the text at its anchor so that it states what
-   was agreed:
+4. For each settled thread, read the whole thread. If it contains `✎` notes, the BA has already edited the
+   text: check that the current wording matches what the thread concludes and change nothing unless it does not.
+   Otherwise change the text at its anchor so that it states what was agreed:
    - change as little as possible, in the story's own wording and structure;
    - write only what the thread actually settles — if a `resolved` thread ends without a usable answer, leave
      the text alone and report the thread as inconclusive;
@@ -140,6 +165,9 @@ step that needs judgement; everything else is mechanical.
 - The page renders common markdown: headings, paragraphs, lists, tables, quotes, fenced code, bold, italic,
   strikethrough, inline code, links. Anything else (raw HTML blocks, images, footnotes) is shown as plain text.
   Nothing is lost either way — the page carries the original markdown untouched and gives it back on `extract`.
+- A question follows its words through an edit by comparing the old and new text word by word. When the whole
+  sentence around it is rewritten, the words cannot be matched: the thread is kept, gets a "removed the text"
+  note, and is shown at the end of the story without a highlight.
 - Two people editing separate copies of the same page at the same time produce two files that must be merged by
   hand. Pass one file back and forth.
 

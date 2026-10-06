@@ -6,6 +6,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const CLI = path.join(__dirname, '..', 'scripts', 'refine.mjs');
+const core = require('../scripts/core.cjs');
 
 const STORY = 'Export invoice to PDF\n\n1. Given an issued invoice, the browser downloads invoice-<number>.pdf.\n';
 
@@ -163,4 +164,67 @@ test('asking for help prints the usage and is not an error', () => {
     assert.equal(result.status, 0);
     assert.match(result.stdout, /Usage:[\s\S]*render[\s\S]*extract[\s\S]*strip[\s\S]*status[\s\S]*drop/);
   }
+});
+
+const REWRITTEN = [
+  'Export invoice to PDF',
+  '',
+  '1. Given an issued invoice, the browser downloads invoice-<number>.pdf in lowercase.',
+  '2. A draft cannot be exported.',
+  '',
+].join('\n');
+
+test('a rendered page remembers the story it started from', () => {
+  const ws = workspace({ 'story.md': ANNOTATED });
+
+  ws.run('render', 'story.md');
+
+  const { history } = core.readPage(ws.read('story.html'));
+  assert.equal(history.versions.length, 1);
+  assert.equal(history.versions[0].text + '\n', STORY);
+});
+
+test('a story rewritten outside the page gets the questions of the older one and shows what changed', () => {
+  const ws = workspace({ 'story.md': ANNOTATED, 'from-ba.md': REWRITTEN });
+
+  const result = ws.run('rebase', 'story.md', 'from-ba.md', '--by', 'BA');
+
+  assert.equal(result.status, 0, result.stderr);
+  const page = core.readPage(ws.read('from-ba.html'));
+  assert.match(page.markdown, /an issued <mark id="q1">invoice<\/mark>, the browser downloads <mark id="q2">invoice-<number>\.pdf<\/mark> in lowercase\./);
+  assert.match(page.markdown, /\*\*BA\*\* · [\d-]+ [\d:]+ — ✎ edited the text around “invoice”/);
+  assert.deepEqual(page.history.versions.map((v) => v.author), [null, 'BA']);
+  assert.equal(page.history.versions[0].text + '\n', STORY);
+});
+
+test('a returned page keeps its history when a rewritten story is laid over it', () => {
+  const ws = workspace({ 'story.md': ANNOTATED, 'from-ba.md': REWRITTEN });
+  ws.run('render', 'story.md');
+
+  ws.run('rebase', 'story.html', 'from-ba.md', '--by', 'BA', '-o', 'next.html');
+
+  const { history } = core.readPage(ws.read('next.html'));
+  assert.equal(history.versions.length, 2);
+  assert.equal(history.versions[1].text + '\n', REWRITTEN);
+});
+
+test('a rewritten story that brings its own questions keeps them', () => {
+  const own = REWRITTEN.replace('A draft', 'A <mark id="q5">draft</mark>') +
+    '\n<!-- refine:threads -->\n## Questions\n\n### q5 · open\n1. **BA** · 2026-10-07 10:00 — Is that right?\n';
+  const ws = workspace({ 'story.md': ANNOTATED, 'from-ba.md': own });
+
+  ws.run('rebase', 'story.md', 'from-ba.md', '--by', 'BA');
+
+  const page = core.readPage(ws.read('from-ba.html'));
+  assert.equal(page.markdown, own);
+  assert.equal(page.history.versions.length, 2);
+});
+
+test('laying a rewritten story over an older one does not overwrite an existing page', () => {
+  const ws = workspace({ 'story.md': ANNOTATED, 'from-ba.md': REWRITTEN, 'from-ba.html': 'keep me' });
+
+  const refused = ws.run('rebase', 'story.md', 'from-ba.md');
+
+  assert.notEqual(refused.status, 0);
+  assert.equal(ws.read('from-ba.html'), 'keep me');
 });

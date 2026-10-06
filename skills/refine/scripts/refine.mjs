@@ -13,6 +13,9 @@ const USAGE = `Usage:
   refine.mjs strip   <story.md|page.html>  [-o <clean.md>]  [--force]   story without anchors and threads
   refine.mjs status  <story.md|page.html>                               list questions and their threads
   refine.mjs drop    <story.md> <qN>...                                 remove questions from a story
+  refine.mjs rebase  <older.md|page.html> <edited.md> [-o <page.html>] [--by <name>] [--force]
+                                                                        page for a story edited outside the page:
+                                                                        questions of the older one, changes marked
   refine.mjs help                                                       show this text
 
 render and extract never overwrite an existing file unless --force is given.
@@ -22,10 +25,11 @@ class Refusal extends Error {}
 
 function parse(argv) {
   const [command, ...rest] = argv;
-  const options = { command, positional: [], output: null, force: false };
+  const options = { command, positional: [], output: null, force: false, by: null };
   for (let i = 0; i < rest.length; i += 1) {
     if (rest[i] === '--force') options.force = true;
     else if (rest[i] === '-o' || rest[i] === '--output') options.output = rest[++i];
+    else if (rest[i] === '--by') options.by = rest[++i];
     else options.positional.push(rest[i]);
   }
   return options;
@@ -58,12 +62,38 @@ function withExtension(file, extension) {
   return path.join(path.dirname(file), path.basename(file, path.extname(file)) + extension);
 }
 
-function render({ positional: [story], output, force }) {
-  const markdown = core.writeDocument(core.readDocument(read(story)));
-  const page = read(path.join(HERE, 'page.html'))
-    .replace('<!--REFINE_DATA-->', () => core.dataElement({ fileName: path.basename(story), markdown }))
+function now() {
+  const d = new Date();
+  const two = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+
+function pageOf(fileName, doc, history) {
+  const story = { fileName, markdown: core.writeDocument(doc), history };
+  return read(path.join(HERE, 'page.html'))
+    .replace('<!--REFINE_DATA-->', () => core.dataElement(story))
     .replace('/*REFINE_CORE*/', () => read(path.join(HERE, 'core.cjs')));
-  write(output || withExtension(story, '.html'), page, force);
+}
+
+function render({ positional: [story], output, force }) {
+  const doc = core.readDocument(read(story));
+  write(output || withExtension(story, '.html'), pageOf(path.basename(story), doc, core.newHistory(doc.text, now())), force);
+}
+
+// A story edited outside the page, shown against the older one: the older questions are carried onto
+// the new text (unless the edited story brings its own), and the page marks what changed.
+function rebase({ positional: [older, edited], output, force, by }) {
+  if (!edited) throw new Refusal(USAGE);
+  const olderPage = isPage(older) ? core.readPage(read(older)) : null;
+  const olderDoc = core.readDocument(olderPage ? olderPage.markdown : read(older));
+  const editedDoc = core.readDocument(storyIn(edited));
+  const signed = { author: by || 'external edit', at: now() };
+  const hasOwnQuestions = editedDoc.threads.length > 0;
+  const doc = hasOwnQuestions ? editedDoc : core.changeText(olderDoc, editedDoc.text, signed);
+  const started = (olderPage && olderPage.history) || core.newHistory(olderDoc.text, signed.at);
+  const history = core.recordSave(started, doc.text, signed.author, signed.at);
+  write(output || withExtension(edited, '.html'), pageOf(path.basename(edited), doc, history), force);
+  console.log(hasOwnQuestions ? `Kept the questions found in ${edited}.` : `Carried ${olderDoc.threads.length} question(s) over from ${older}.`);
 }
 
 function extract({ positional: [page], output, force }) {
@@ -105,7 +135,7 @@ function drop({ positional: [story, ...ids] }) {
   console.log(`Dropped ${ids.join(', ')} from ${story}`);
 }
 
-const COMMANDS = { render, extract, strip, status, drop };
+const COMMANDS = { render, extract, strip, status, drop, rebase };
 
 try {
   const options = parse(process.argv.slice(2));
