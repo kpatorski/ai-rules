@@ -1,18 +1,18 @@
-// Refinement core: the annotated-story document model.
+// Refine core: the annotated-story document model.
 // Plain script on purpose — it is inlined into the generated page and also loaded by node (CLI, tests).
 (function (root) {
   'use strict';
 
   // This file is inlined into the page's script element, so it must never spell out an HTML comment opener
   // or a script tag: either would change how the browser reads the page. Hence the split strings and \x3c.
-  const THREADS_MARKER = '<' + '!-- refinement:threads --' + '>';
+  const THREADS_MARKER = '<' + '!-- refine:threads --' + '>';
   const THREADS_TITLE = '## Questions';
   const MARK_TAG = /<mark\b([^>]*)>|<\/mark>/g;
   const ANCHOR_ATTRIBUTES = /^\s+id=(["'])(q\d+)\1\s*$/;
   const THREAD_HEADING = /^### (q\d+) · (open|resolved)\s*$/;
   const MESSAGE_START = /^\d+\. \*\*(.+?)\*\* · (\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2})?) — (.*)$/;
   const CONTINUATION_INDENT = '   ';
-  const DATA_ELEMENT = /\x3cscript type="application\/json" id="refinement-data">([\s\S]*?)\x3c\/script>/;
+  const DATA_ELEMENT = /\x3cscript type="application\/json" id="refine-data">([\s\S]*?)\x3c\/script>/;
 
   // ---- reading -------------------------------------------------------------------------------
 
@@ -641,12 +641,12 @@
   }
 
   function dataElement(story) {
-    return `\x3cscript type="application/json" id="refinement-data">${pageData(story)}\x3c/script>`;
+    return `\x3cscript type="application/json" id="refine-data">${pageData(story)}\x3c/script>`;
   }
 
   function readPage(html) {
     const element = DATA_ELEMENT.exec(html);
-    if (!element) throw new Error('Not a refinement page: no embedded story found.');
+    if (!element) throw new Error('Not a refine page: no embedded story found.');
     const { fileName, markdown } = JSON.parse(element[1]);
     return { fileName, markdown };
   }
@@ -667,5 +667,5 @@
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  else root.RefinementCore = api;
+  else root.RefineCore = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

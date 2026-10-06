@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Command line for the refinement skill: story.md <-> self-contained review page.
+// Command line for the refine skill: story.md <-> self-contained review page.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,12 +8,12 @@ import core from './core.cjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const USAGE = `Usage:
-  refinement.mjs render  <story.md>            [-o <page.html>] [--force]   story -> review page
-  refinement.mjs extract <page.html>           [-o <story.md>]  [--force]   review page -> story with questions
-  refinement.mjs strip   <story.md|page.html>  [-o <clean.md>]  [--force]   story without anchors and threads
-  refinement.mjs status  <story.md|page.html>                               list questions and their threads
-  refinement.mjs drop    <story.md> <qN>...                                 remove questions from a story
-  refinement.mjs help                                                       show this text
+  refine.mjs render  <story.md>            [-o <page.html>] [--force]   story -> review page
+  refine.mjs extract <page.html>           [-o <story.md>]  [--force]   review page -> story with questions
+  refine.mjs strip   <story.md|page.html>  [-o <clean.md>]  [--force]   story without anchors and threads
+  refine.mjs status  <story.md|page.html>                               list questions and their threads
+  refine.mjs drop    <story.md> <qN>...                                 remove questions from a story
+  refine.mjs help                                                       show this text
 
 render and extract never overwrite an existing file unless --force is given.
 The review page needs only a browser; it can also export its markdown itself.`;
@@ -61,8 +61,8 @@ function withExtension(file, extension) {
 function render({ positional: [story], output, force }) {
   const markdown = core.writeDocument(core.readDocument(read(story)));
   const page = read(path.join(HERE, 'page.html'))
-    .replace('<!--REFINEMENT_DATA-->', () => core.dataElement({ fileName: path.basename(story), markdown }))
-    .replace('/*REFINEMENT_CORE*/', () => read(path.join(HERE, 'core.cjs')));
+    .replace('<!--REFINE_DATA-->', () => core.dataElement({ fileName: path.basename(story), markdown }))
+    .replace('/*REFINE_CORE*/', () => read(path.join(HERE, 'core.cjs')));
   write(output || withExtension(story, '.html'), page, force);
 }
 

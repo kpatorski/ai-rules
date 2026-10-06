@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Refinement</title>
+<title>Refine</title>
 <style>
   /* Palette of the craftsman dashboard; the light set mirrors it. */
   :root {
@@ -163,14 +163,14 @@
 </head>
 <body>
 <div id="app"></div>
-<!--REFINEMENT_DATA-->
-<script>/*REFINEMENT_CORE*/</script>
+<!--REFINE_DATA-->
+<script>/*REFINE_CORE*/</script>
 <script>
 (function () {
   'use strict';
 
-  const core = window.RefinementCore;
-  const dataElement = document.getElementById('refinement-data');
+  const core = window.RefineCore;
+  const dataElement = document.getElementById('refine-data');
   const source = JSON.parse(dataElement.textContent);
   const app = document.getElementById('app');
 
@@ -231,13 +231,13 @@
       h('li', {}, h('b', {}, 'Resolve'), ' marks a question as settled; Reopen undoes it.'),
       h('li', {}, h('b', {}, 'Save'), ' is the only button you need: it writes your changes into this page. Send the saved file back.'),
       h('li', {}, h('b', {}, '.md'), ' is optional: it downloads the story as markdown with all questions and answers.')),
-    h('p', { class: 'made' }, 'Made with the ', h('code', {}, 'refinement'), ' skill for Claude Code. ',
-      h('code', {}, '/refinement <file>'), ' turns markdown into this page and back.'));
+    h('p', { class: 'made' }, 'Made with the ', h('code', {}, 'refine'), ' skill for Claude Code. ',
+      h('code', {}, '/refine <file>'), ' turns markdown into this page and back.'));
 
-  author.value = remembered('refinement.author');
+  author.value = remembered('refine.author');
   author.addEventListener('input', () => {
     author.classList.remove('needed');
-    remember('refinement.author', author.value.trim());
+    remember('refine.author', author.value.trim());
   });
 
   app.append(
@@ -610,7 +610,7 @@
     const page = document.documentElement.cloneNode(true);
     page.removeAttribute('data-theme');
     page.querySelector('#app').replaceChildren();
-    page.querySelector('#refinement-data').textContent =
+    page.querySelector('#refine-data').textContent =
       core.pageData({ fileName: source.fileName, markdown: core.writeDocument(state.doc) });
     return `<!DOCTYPE html>\n${page.outerHTML}\n`;
   }
@@ -626,7 +626,7 @@
       try {
         state.fileHandle = state.fileHandle || await window.showSaveFilePicker({
           suggestedName: pageName(),
-          types: [{ description: 'Refinement page', accept: { 'text/html': ['.html'] } }],
+          types: [{ description: 'Refine review page', accept: { 'text/html': ['.html'] } }],
         });
         const writable = await state.fileHandle.createWritable();
         await writable.write(html);
@@ -696,11 +696,11 @@
       ? root.dataset.theme === 'light'
       : window.matchMedia('(prefers-color-scheme: light)').matches;
     root.dataset.theme = light ? 'dark' : 'light';
-    remember('refinement.theme', root.dataset.theme);
+    remember('refine.theme', root.dataset.theme);
   }
 
-  if (remembered('refinement.theme')) document.documentElement.dataset.theme = remembered('refinement.theme');
-  document.title = `${source.fileName} — refinement`;
+  if (remembered('refine.theme')) document.documentElement.dataset.theme = remembered('refine.theme');
+  document.title = `${source.fileName} — refine`;
   render();
 })();
 </script>

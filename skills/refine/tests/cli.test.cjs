@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const CLI = path.join(__dirname, '..', 'scripts', 'refinement.mjs');
+const CLI = path.join(__dirname, '..', 'scripts', 'refine.mjs');
 
 const STORY = 'Export invoice to PDF\n\n1. Given an issued invoice, the browser downloads invoice-<number>.pdf.\n';
 
@@ -14,7 +14,7 @@ const ANNOTATED = [
   '',
   '1. Given an issued <mark id="q1">invoice</mark>, the browser downloads <mark id="q2">invoice-<number>.pdf</mark>.',
   '',
-  '<!-- refinement:threads -->',
+  '<!-- refine:threads -->',
   '## Questions',
   '',
   '### q1 · resolved',
@@ -27,7 +27,7 @@ const ANNOTATED = [
 ].join('\n');
 
 function workspace(files) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refinement-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'refine-'));
   for (const [name, content] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), content);
   return {
     run: (...args) => spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8' }),
@@ -52,7 +52,7 @@ test('a rendered page is a single self-contained file', () => {
 
   const page = ws.read('story.html');
   assert.match(page, /^<!DOCTYPE html>/);
-  assert.doesNotMatch(page, /<script[^>]+src=|<link[^>]+href=|REFINEMENT_/);
+  assert.doesNotMatch(page, /<script[^>]+src=|<link[^>]+href=|REFINE_/);
 });
 
 test('nothing inlined into a rendered page can break out of its script element', () => {
@@ -139,13 +139,13 @@ test('dropping an unknown question changes nothing', () => {
   assert.equal(ws.read('story.md'), ANNOTATED);
 });
 
-test('a file that is not a refinement page is reported, not guessed at', () => {
+test('a file that is not a refine page is reported, not guessed at', () => {
   const ws = workspace({ 'other.html': '<html><body>hello</body></html>' });
 
   const result = ws.run('extract', 'other.html');
 
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /not a refinement page/i);
+  assert.match(result.stderr, /not a refine page/i);
   assert.equal(ws.has('other.md'), false);
 });
 

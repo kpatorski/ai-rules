@@ -20,7 +20,7 @@ const ANNOTATED = [
   '1. Given an issued <mark id="q1">invoice</mark>, when the user clicks "Download PDF", then the browser downloads a PDF file.',
   '2. The file is named invoice-<number>.pdf (e.g. invoice-FV-2026-09-014.pdf).',
   '',
-  '<!-- refinement:threads -->',
+  '<!-- refine:threads -->',
   '## Questions',
   '',
   '### q1 · open',
@@ -234,5 +234,5 @@ test('the embedded story cannot close its own script element', () => {
 });
 
 test('a page without an embedded story is rejected', () => {
-  assert.throws(() => core.readPage('<html></html>'), /refinement page/i);
+  assert.throws(() => core.readPage('<html></html>'), /refine page/i);
 });

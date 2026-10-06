@@ -1,17 +1,16 @@
 ---
-name: refinement
+name: refine
 description: >
   Question-and-answer loop over a requirements story (markdown) during refinement. Turns the
   story into one self-contained HTML review page where text can be selected and questioned,
   each question holding a numbered thread that the developer and the business analyst both
   write in; turns a returned page back into markdown; and finally merges the agreed answers
-  into the requirements text. Trigger: "/refinement", "prepare this story for refinement",
-  "render the story for the BA", "the BA sent the page back", "extract the answers",
-  "ingest the answers into the story".
+  into the requirements text. Runs only when the user types "/refine".
 argument-hint: "[help|render|extract|ingest|status] <story.md | page.html>"
+disable-model-invocation: true
 ---
 
-# refinement
+# refine
 
 A story from the business analyst (BA) usually raises many questions. This skill keeps those questions **inside the
 story file**, attached to the exact words they are about, and moves the file back and forth between two shapes:
@@ -37,7 +36,7 @@ A question is a light anchor in the text plus a thread in a section at the end o
 ```markdown
 1. Given an issued <mark id="q1">invoice</mark>, when the user clicks "Download PDF", ...
 
-<!-- refinement:threads -->
+<!-- refine:threads -->
 ## Questions
 
 ### q1 · open
@@ -47,7 +46,7 @@ A question is a light anchor in the text plus a thread in a section at the end o
 ```
 
 - The anchor is `<mark id="qN">…</mark>`. Ids are `q1`, `q2`, … and never reused within a file.
-- Everything from the `<!-- refinement:threads -->` line to the end of the file belongs to the threads.
+- Everything from the `<!-- refine:threads -->` line to the end of the file belongs to the threads.
 - A thread heading is `### qN · open` or `### qN · resolved`.
 - A message is `N. **author** · YYYY-MM-DD HH:MM — text`; `N` is the order in which messages were written.
 - Anchors may nest. An anchor may start in plain text and end inside bold text; the page handles that.
@@ -59,15 +58,15 @@ current local time, then run `status` to confirm the file still reads correctly.
 
 ## Commands
 
-The tool is `scripts/refinement.mjs` in this skill's directory (node 18+, no dependencies):
+The tool is `scripts/refine.mjs` in this skill's directory (node 18+, no dependencies):
 
 ```bash
-node ~/.ai/skills/refinement/scripts/refinement.mjs render  <story.md>           [-o <page.html>] [--force]
-node ~/.ai/skills/refinement/scripts/refinement.mjs extract <page.html>          [-o <story.md>]  [--force]
-node ~/.ai/skills/refinement/scripts/refinement.mjs strip   <story.md|page.html> [-o <clean.md>]  [--force]
-node ~/.ai/skills/refinement/scripts/refinement.mjs status  <story.md|page.html>
-node ~/.ai/skills/refinement/scripts/refinement.mjs drop    <story.md> <qN>...
-node ~/.ai/skills/refinement/scripts/refinement.mjs help
+node ~/.ai/skills/refine/scripts/refine.mjs render  <story.md>           [-o <page.html>] [--force]
+node ~/.ai/skills/refine/scripts/refine.mjs extract <page.html>          [-o <story.md>]  [--force]
+node ~/.ai/skills/refine/scripts/refine.mjs strip   <story.md|page.html> [-o <clean.md>]  [--force]
+node ~/.ai/skills/refine/scripts/refine.mjs status  <story.md|page.html>
+node ~/.ai/skills/refine/scripts/refine.mjs drop    <story.md> <qN>...
+node ~/.ai/skills/refine/scripts/refine.mjs help
 ```
 
 - `render` writes `<story>.html` next to the story. `extract` writes `<page>.md` next to the page.
@@ -147,8 +146,8 @@ step that needs judgement; everything else is mechanical.
 ## Changing this skill
 
 Behaviour lives in `scripts/core.cjs` (document model and markdown layout, shared by the command line and the
-page), `scripts/page.html` (the page shell) and `scripts/refinement.mjs` (the command line). Tests come first:
+page), `scripts/page.html` (the page shell) and `scripts/refine.mjs` (the command line). Tests come first:
 
 ```bash
-cd ~/.ai/skills/refinement && node --test tests/
+cd ~/.ai/skills/refine && node --test tests/
 ```
