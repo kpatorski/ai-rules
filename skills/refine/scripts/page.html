@@ -168,7 +168,9 @@
   .empty { color: var(--muted); font-size: 13px; }
 
   /* ---- floating bits ---- */
-  .ask-button { position: absolute; z-index: 8; }
+  .ask-button, .ask-button.primary:hover { position: absolute; z-index: 8; height: 26px; padding: 0 10px; background: var(--panel);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+  .ask-button.primary:hover { background: var(--panel2); }
   .composer { position: absolute; z-index: 9; width: min(420px, calc(100vw - 24px)); padding: 10px; background: var(--panel);
     border: 1px solid var(--blue); border-radius: 6px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); display: flex;
     flex-direction: column; gap: 8px; }
