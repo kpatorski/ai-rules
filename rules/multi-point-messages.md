@@ -22,12 +22,11 @@ replies, `AskUserQuestion` question text, checkpoint prompts in any tool or skil
 
 ## Why
 
-The user reads on a narrow terminal/UI with preview off. Several distinct points run together in one paragraph are
-hard to parse at a glance and easy to skim past — exactly the failure caught live, twice, in the same session: a
-`confirm-conventions` checkpoint bundling two decisions into one paragraph, and immediately after, a
-`review-design-direction` checkpoint doing the same thing again despite the first correction. A rule that only
-lives in a task-specific memory file gets applied inconsistently across sessions and tools; this belongs in the
-always-loaded global rules so it's checked before every message, not recalled opportunistically.
+Messages are often read in a narrow terminal or chat pane. Several distinct points run together in one paragraph are
+hard to parse at a glance and easy to skim past — a decision buried mid-paragraph gets missed, and the user ends up
+answering only part of what was asked. The failure also recurs: it is easy to fix one message after a correction
+and pack the very next one just as densely, which is why the rule asks for a check before every message rather
+than once per session.
 
 ## Precedence
 
