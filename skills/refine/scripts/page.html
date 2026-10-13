@@ -123,7 +123,8 @@
   .q.q-last::after { content: attr(data-label); font: 600 10px var(--mono); vertical-align: super; margin-left: 2px;
     color: var(--amber); }
   .q[data-status="resolved"].q-last::after { color: var(--green); }
-  .q.flash { outline: 2px solid var(--blue); }
+  .q.flash, .story :is(h1, h2, h3, h4, h5, h6).flash { outline: 2px solid var(--blue); }
+  .story :is(h1, h2, h3, h4, h5, h6) { scroll-margin-top: 64px; }
 
   /* ---- thread ---- */
   .thread { margin: 8px 0 14px; background: var(--panel); border: 1px solid var(--border);
@@ -433,7 +434,7 @@
   function blockNode(block) {
     switch (block.type) {
       case 'heading':
-        return h(`h${block.level}`, { 'data-inline': true }, inlineNodes(block.inline));
+        return h(`h${block.level}`, { id: block.slug || null, 'data-inline': true }, inlineNodes(block.inline));
       case 'code':
         return h('pre', {}, h('code', { 'data-inline': true }, inlineNodes(block.inline)));
       case 'rule':
@@ -489,7 +490,9 @@
   function linkNode(node) {
     const safe = /^(https?:|mailto:)/i.test(node.href) || !/^[a-z][a-z0-9+.-]*:/i.test(node.href);
     if (!safe) return h('span', {}, inlineNodes(node.children));
-    return h('a', { href: node.href, target: '_blank', rel: 'noopener noreferrer' }, inlineNodes(node.children));
+    const href = core.pageHref(node.href);
+    const elsewhere = href.startsWith('#') ? {} : { target: '_blank', rel: 'noopener noreferrer' };
+    return h('a', { href, ...elsewhere }, inlineNodes(node.children));
   }
 
   // Questions are stored as q1, q2, …; people see them as #1, #2, ….
@@ -644,8 +647,29 @@
     const target = story.querySelector(`.q[data-q="${id}"]`) || story.querySelector(`.thread[data-thread="${id}"]`);
     if (!target) return;
     target.scrollIntoView({ block: 'center' });
+    flash(target);
+  }
+
+  function flash(target) {
     target.classList.add('flash');
     window.setTimeout(() => target.classList.remove('flash'), 1200);
+  }
+
+  // A link with a fragment — from another story's page or from this one — lands on the heading it names.
+  function jumpToFragment() {
+    const id = fragment();
+    const target = id ? document.getElementById(id) : null;
+    if (!target || !story.contains(target)) return;
+    target.scrollIntoView({ block: 'start' });
+    flash(target);
+  }
+
+  function fragment() {
+    try {
+      return decodeURIComponent(window.location.hash.slice(1));
+    } catch (malformed) {
+      return '';
+    }
   }
 
   // ---- asking about a selection --------------------------------------------------------------
@@ -827,6 +851,8 @@
     notify.timer = window.setTimeout(() => { toast.hidden = true; }, 5000);
   }
 
+  window.addEventListener('hashchange', jumpToFragment);
+
   window.addEventListener('beforeunload', (event) => {
     if (!state.dirty) return;
     event.preventDefault();
@@ -864,6 +890,7 @@
   if (remembered('refine.theme')) document.documentElement.dataset.theme = remembered('refine.theme');
   document.title = `${source.fileName} — refine`;
   render();
+  jumpToFragment();
 })();
 </script>
 </body>

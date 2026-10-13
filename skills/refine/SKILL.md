@@ -128,6 +128,9 @@ Tell the user (and give them this to pass on to the BA) how the page works:
   same result as `extract`, without the command line. It does not replace **Save**: the page itself still has to be
   saved to keep changes.
 - **?** shows these instructions on the page itself, so the BA needs no separate explanation.
+- A link to another story (`[BP-ADR-03](bp-rules.md#bp-adr-03)`) opens that story's page in a new tab, at the
+  linked heading. So `render` every linked story too, into the same directory, and send the pages together; a link
+  to a page that was not rendered opens nothing.
 - **◐** switches between the dark and the light look.
 
 ## Change history
@@ -165,6 +168,9 @@ step that needs judgement; everything else is mechanical.
 - The page renders common markdown: headings, paragraphs, lists, tables, quotes, fenced code, bold, italic,
   strikethrough, inline code, links. Anything else (raw HTML blocks, images, footnotes) is shown as plain text.
   Nothing is lost either way — the page carries the original markdown untouched and gives it back on `extract`.
+- Headings get the ids GitHub gives them (`### BP-ADR-03` → `#bp-adr-03`; a repeated heading gets `-1`, `-2`, …),
+  so a fragment that works on GitHub works on the page. A relative link to another `.md` story opens its rendered
+  `.html` page, at the linked heading; the markdown keeps the `.md` link, on the page and after `extract`.
 - A question follows its words through an edit by comparing the old and new text word by word. When the whole
   sentence around it is rewritten, the words cannot be matched: the thread is kept, gets a "removed the text"
   note, and is shown at the end of the story without a highlight.

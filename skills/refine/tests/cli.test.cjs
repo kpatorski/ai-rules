@@ -46,6 +46,17 @@ test('a rendered page gives back exactly the story it was made from', () => {
   assert.equal(ws.read('back.md'), ANNOTATED);
 });
 
+test('a link to another story comes back from a rendered page byte for byte', () => {
+  const linked = 'Export invoice to PDF\n\nSee [BP-ADR-03](bp-rules.md#bp-adr-03) and [the top](#export).\n';
+  const ws = workspace({ 'story.md': linked });
+
+  assert.equal(ws.run('render', 'story.md').status, 0);
+  assert.equal(ws.run('extract', 'story.html', '-o', 'back.md').status, 0);
+
+  assert.equal(ws.read('back.md'), linked);
+  assert.equal(core.readPage(ws.read('story.html')).markdown, linked);
+});
+
 test('a rendered page is a single self-contained file', () => {
   const ws = workspace({ 'story.md': STORY });
 

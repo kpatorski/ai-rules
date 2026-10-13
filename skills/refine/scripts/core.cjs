@@ -252,6 +252,11 @@
   const ESCAPABLE = /[!-/:-@[-`{-~]/;
   const BARE_LINK = /^https?:\/\/[^\s<>]+/;
   const DELIMITERS = { '*': ['**', '*'], _: ['__', '_'], '~': ['~~'] };
+  // Ids the page shell uses for its own elements; a heading must not take them.
+  const SHELL_IDS = ['app', 'refine-data'];
+  const NOT_IN_SLUG = /[^\p{L}\p{M}\p{N} _-]/gu;
+  const MARKDOWN_PATH = /^([^?#]*)\.md(?=[?#]|$)/i;
+  const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
   function layout(doc) {
     let offset = 0;
@@ -260,7 +265,41 @@
       offset += text.length + 1;
       return line;
     });
-    return layoutBlocks(doc.anchors, lines);
+    const blocks = layoutBlocks(doc.anchors, lines);
+    giveSlugs(blocks, new Set(SHELL_IDS));
+    return blocks;
+  }
+
+  // Every heading gets the id a link fragment can point at, numbered when the same one comes again.
+  function giveSlugs(blocks, taken) {
+    for (const block of blocks) {
+      if (block.type === 'heading') block.slug = freeSlug(slug(plainText(block.inline)), taken);
+      else if (block.type === 'quote') giveSlugs(block.blocks, taken);
+      else if (block.type === 'list') block.items.forEach((item) => giveSlugs(item, taken));
+    }
+  }
+
+  function freeSlug(wanted, taken) {
+    let free = wanted;
+    for (let n = 1; taken.has(free); n += 1) free = `${wanted}-${n}`;
+    taken.add(free);
+    return free;
+  }
+
+  // The anchor GitHub gives a heading in rendered markdown, so a fragment that works there works on the page.
+  function slug(text) {
+    return text.toLowerCase().replace(NOT_IN_SLUG, '').replace(/ /g, '-');
+  }
+
+  function plainText(nodes) {
+    return nodes.map((node) => (node.type === 'text' ? node.text : plainText(node.children || []))).join('');
+  }
+
+  // Where a link leads on the page: a relative link to a markdown story opens that story's rendered page.
+  // The story itself keeps the link as written.
+  function pageHref(href) {
+    if (HAS_SCHEME.test(href) || href.startsWith('//')) return href;
+    return href.replace(MARKDOWN_PATH, '$1.html');
   }
 
   function layoutBlocks(anchors, lines) {
@@ -982,6 +1021,8 @@
     writeDocument,
     withoutQuestions,
     layout,
+    slug,
+    pageHref,
     diff,
     units,
     editUnit,
