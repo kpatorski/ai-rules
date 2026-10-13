@@ -13,6 +13,7 @@ they apply in every project.
     * [Rules](#rules-1)
     * [Skills](#skills-1)
   * [Updating](#updating)
+  * [License](#license)
 <!-- TOC -->
 
 ## Install
@@ -81,3 +82,9 @@ git -C ~/.ai pull
 ```
 
 New and changed rules take effect in the next session.
+
+## License
+
+[PolyForm Internal Use License 1.0.0](LICENSE.md) — free to use, including commercially, for your own internal
+purposes. Redistribution (forking and republishing, mirroring, or otherwise passing this repository or a modified
+version of it on to third parties) is not permitted.
