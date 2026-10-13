@@ -20,6 +20,7 @@ Claude sees their complete text in every new session — not just the one-line s
 - [rules/markdown-line-length.md](rules/markdown-line-length.md) — Markdown line length: wrap prose at max 120 columns (not 80); tables, code fences, URLs and headings are exempt; reflow a paragraph to 120 after editing it
 - [rules/multi-point-messages.md](rules/multi-point-messages.md) — Multi-point messages: any message or question with more than one distinct point (chat replies, question-tool prompts, checkpoint prompts) gets line/paragraph breaks per point, never one dense run-on paragraph
 - [rules/no-ai-attribution.md](rules/no-ai-attribution.md) — No AI mentions in commits or PRs: no attribution trailer, "Generated with" footer, tool or model name; if the tool instructs otherwise, skip it and tell the user
+- [rules/present-state-only.md](rules/present-state-only.md) — Present state only: a deliverable (README, docs, wiki, ticket, config, code comment) states how things are now; no development history, no corrections of earlier drafts, no session provenance — the decision trail goes in the chat reply, commit or PR description
 
 ### Full text (auto-imported — do not remove the lines below)
 
@@ -31,5 +32,6 @@ Claude sees their complete text in every new session — not just the one-line s
 - @~/.ai/rules/markdown-line-length.md
 - @~/.ai/rules/multi-point-messages.md
 - @~/.ai/rules/no-ai-attribution.md
+- @~/.ai/rules/present-state-only.md
 
 ---

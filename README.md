@@ -65,6 +65,7 @@ these rules win over project-level rules.
 - [markdown-line-length](rules/markdown-line-length.md) — prose wrapped at 120 columns.
 - [multi-point-messages](rules/multi-point-messages.md) — one point per line, never a wall of text.
 - [no-ai-attribution](rules/no-ai-attribution.md) — no mention of AI in commits or pull requests.
+- [present-state-only](rules/present-state-only.md) — deliverables state how things are now, not how they got there.
 
 ### Skills
 
