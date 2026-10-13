@@ -2,7 +2,8 @@
 
 ## 🔴 Enforcement
 
-All rules are **MANDATORY**. When rules conflict: prefer the more restrictive rule. Local project rules (`.claude`, `.clinerules`, `.cline`, `.gemini`) override global rules — preserve their intent, not just their wording.
+All rules are **MANDATORY**. When a project-level rule conflicts with a rule here, the rule here wins. When two
+rules here conflict, the more specific one wins.
 
 ---
 

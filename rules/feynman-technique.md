@@ -109,6 +109,5 @@ This rule is about **structure and clarity, not language** — apply it in whate
 conversation is happening in (see `response-language.md`).
 
 On conflict with other rules — see the hierarchy in `ai-rules.md`:
-1. the more restrictive rule wins,
-2. local project rules beat global ones,
-3. intent matters, not just the letter of the rule.
+1. these global rules win over project-level rules,
+2. between two global rules, the more specific one wins.

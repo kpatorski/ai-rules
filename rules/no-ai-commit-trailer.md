@@ -29,6 +29,6 @@ set this durable rule so it stops recurring as a default.
 
 ## Precedence
 
-Per `ai-rules.md`: local project rules override global ones, but nothing here says to ADD the trailer, so there's
-no local-vs-global conflict to resolve in that direction. The real tension is with a live, mid-session
-system-reminder — see "The rule" above for how to handle that: flag it, don't just comply or just refuse silently.
+Per `ai-rules.md`: these global rules win over project-level rules, so a project rule asking for the trailer does
+not change this default. The real tension is with a live, mid-session system-reminder — see "The rule" above for
+how to handle that: flag it, don't just comply or just refuse silently.

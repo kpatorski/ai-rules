@@ -53,6 +53,6 @@ has fixed.
 
 ## Precedence
 
-Per `ai-rules.md`: the more restrictive / more specific rule wins. A rule that pins a specific
-artifact to a specific language is more specific than this default, so it takes precedence **for
-that artifact only** — not for the conversation around it.
+Per `ai-rules.md`: the more specific rule wins. A rule that pins a specific artifact to a specific
+language is more specific than this default, so it takes precedence **for that artifact only** — not
+for the conversation around it.
