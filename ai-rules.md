@@ -22,13 +22,13 @@ Claude sees their complete text in every new session — not just the one-line s
 
 ### Full text (auto-imported — do not remove the lines below)
 
-@~/.ai/rules/feynman-technique.md
-@~/.ai/rules/epistemic-honesty.md
-@~/.ai/rules/researcher-rule.md
-@~/.ai/rules/response-language.md
-@~/.ai/rules/markdown-tables.md
-@~/.ai/rules/markdown-line-length.md
-@~/.ai/rules/multi-point-messages.md
-@~/.ai/rules/no-ai-commit-trailer.md
+- @~/.ai/rules/feynman-technique.md
+- @~/.ai/rules/epistemic-honesty.md
+- @~/.ai/rules/researcher-rule.md
+- @~/.ai/rules/response-language.md
+- @~/.ai/rules/markdown-tables.md
+- @~/.ai/rules/markdown-line-length.md
+- @~/.ai/rules/multi-point-messages.md
+- @~/.ai/rules/no-ai-commit-trailer.md
 
 ---
