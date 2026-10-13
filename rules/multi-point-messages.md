@@ -3,7 +3,8 @@
 ## 🔴 STATUS: MANDATORY
 
 Applies to **every message or question sent to the user** that carries more than one distinct point — chat
-replies, `AskUserQuestion` question text, checkpoint prompts in any tool or skill, status updates, summaries.
+replies, the text of a question asked through a question tool, checkpoint prompts in any tool or skill, status
+updates, summaries.
 
 ## The rule
 
@@ -11,10 +12,10 @@ replies, `AskUserQuestion` question text, checkpoint prompts in any tool or skil
   into one ask, a status update touching more than one thing — put **each point on its own line** (a short
   paragraph break, a numbered list, or a bulleted list). Never pack multiple distinct points into one dense,
   run-on paragraph.
-- This applies inside tool fields too, not just free chat text — an `AskUserQuestion` `question` string with three
-  clauses joined by semicolons/dashes is exactly the failure this rule targets, not an exception to it. If the
-  tool field itself won't render line breaks usefully, put the line-broken version in a lead-in chat message
-  before the tool call instead of cramming it into the field.
+- This applies inside tool fields too, not just free chat text — a question-tool prompt with three clauses joined
+  by semicolons/dashes is exactly the failure this rule targets, not an exception to it. If the tool field itself
+  won't render line breaks usefully, put the line-broken version in a lead-in chat message before the tool call
+  instead of cramming it into the field.
 - A single, simple point stays a single sentence — this rule is about **density of distinct points**, not about
   forcing structure onto short messages that don't need it.
 - Re-check this *every time* a message is about to be sent, not once per session — a rule remembered in the

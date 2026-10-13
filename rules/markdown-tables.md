@@ -9,16 +9,16 @@ READMEs, research notes, code comments, PR descriptions, chat answers.
 
 Two reasons, both pointing at the same style:
 
-1. **User preference.** The user reads Markdown in source view with preview off, and the
-   column-aligned ("many spaces") style is far more legible there. This is the wanted style in
-   its own right — do not "simplify" a padded table back to single-space cells.
+1. **Readable source.** Markdown is often read as source, with no preview, and the column-aligned
+   ("many spaces") style is far more legible there. This is the wanted style in its own right —
+   do not "simplify" a padded table back to single-space cells.
 2. **IntelliJ.** IDEA's **"Incorrect table formatting"** Markdown inspection flags tables whose
-   columns are not padded to a single consistent width per column. The user then reformats by
-   hand.
+   columns are not padded to a single consistent width per column, and someone then has to
+   reformat them by hand.
 
-The target style is exactly what IntelliJ's own table formatter produces, which is also what the
-user produces by hand: **minimal** padding — each column is only as wide as its longest cell, no
-extra slack, and everything in the column padded to that one width.
+The target style is exactly what IntelliJ's own table formatter produces: **minimal** padding —
+each column is only as wide as its longest cell, no extra slack, and everything in the column
+padded to that one width.
 
 ## The rule
 

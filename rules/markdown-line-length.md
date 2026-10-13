@@ -20,7 +20,7 @@ notes, skill definitions, PR descriptions, plan files, `.md` deliverables of any
 
 ## Why
 
-The user reads Markdown source with preview off in a wide editor. 80-column wrapping produces
+Markdown is often read as source, with no preview, in a wide editor. 80-column wrapping produces
 needless line breaks that hurt readability at that width. 120 is the target; tables and code
 are exempt because other rules or tooling own their formatting.
 
