@@ -3,11 +3,8 @@
 ## Governing AI rules
 
 Apply the rules in `~/.ai/ai-rules.md` and every file under `~/.ai/rules/`.
-Local project rules (`.claude/`, `.clinerules/`, `.cline/`, `.gemini/`) take precedence over the
-global rules, but the **intent** of the global rules must be preserved.
 
-The import below makes Claude Code load these rules — including the full text of the non-coding
-rules — in every new session:
+The import below makes Claude Code load these rules — including their full text — in every new session:
 
 @~/.ai/ai-rules.md
 

@@ -8,9 +8,8 @@ All rules are **MANDATORY**. When rules conflict: prefer the more restrictive ru
 
 ## General Rules
 
-Apply to **every task and response**. These are non-coding rules and are **imported in full**
-below (`@`-imports), so Claude sees their complete text in every new session — not just the
-one-line summaries.
+Apply to **every task and response**. These rules are **imported in full** below (`@`-imports), so
+Claude sees their complete text in every new session — not just the one-line summaries.
 
 - [rules/feynman-technique.md](rules/feynman-technique.md) — Feynman Technique for explanations, research, and knowledge synthesis; overrides terse/concise style in educational and analytical tasks
 - [rules/epistemic-honesty.md](rules/epistemic-honesty.md) — Epistemic honesty: never guess or fabricate; admit missing data; append an explicit `Confidence: NN%` to every substantive claim, decision, or conclusion
@@ -33,24 +32,3 @@ one-line summaries.
 @~/.ai/rules/no-ai-commit-trailer.md
 
 ---
-
-## Coding Rules
-
-Apply **only when the task involves writing, editing, reviewing, or reasoning about code**.
-Intentionally **linked, not imported** — open the relevant file on demand when a coding task
-starts, to keep the always-on context small.
-
-- [rules/coding/working-with-code.md](rules/coding/working-with-code.md) — TDD-first workflow, safe edit discipline, and general code-change process
-- [rules/coding/clean-code.md](rules/coding/clean-code.md) — Clean code principles: encapsulation, naming, single responsibility, readability
-- [rules/coding/testing.md](rules/coding/testing.md) — Testing standards: TDD, test structure, coverage expectations
-- [rules/coding/architecture.md](rules/coding/architecture.md) — Architecture guidelines: DDD principles and layering rules
-- [rules/coding/domain-examples.md](rules/coding/domain-examples.md) — Domain model examples from Deskify/Votify projects for reference
-- [rules/coding/anti-patterns.md](rules/coding/anti-patterns.md) — AI-specific anti-patterns to detect and avoid in generated code
-- [rules/coding/safe-refactoring.md](rules/coding/safe-refactoring.md) — Safe refactoring: treat code changes as safety-critical; step-by-step discipline
-- [rules/coding/java-backend.md](rules/coding/java-backend.md) — Java backend conventions derived from Votify and Deskify projects
-
----
-
-## Final Rule
-
-If something violates these rules: **STOP — FIX — do not proceed** while the project is in a broken or unsafe state.
