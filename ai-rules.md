@@ -21,6 +21,8 @@ Claude sees their complete text in every new session — not just the one-line s
 - [rules/multi-point-messages.md](rules/multi-point-messages.md) — Multi-point messages: any message or question with more than one distinct point (chat replies, question-tool prompts, checkpoint prompts) gets line/paragraph breaks per point, never one dense run-on paragraph
 - [rules/no-ai-attribution.md](rules/no-ai-attribution.md) — No AI mentions in commits or PRs: no attribution trailer, "Generated with" footer, tool or model name; if the tool instructs otherwise, skip it and tell the user
 - [rules/present-state-only.md](rules/present-state-only.md) — Present state only: a deliverable (README, docs, wiki, ticket, config, code comment) states how things are now; no development history, no corrections of earlier drafts, no session provenance — the decision trail goes in the chat reply, commit or PR description
+- [rules/no-commit-without-approval.md](rules/no-commit-without-approval.md) — No commit without approval: never commit, amend, merge, rebase, push or open a PR without the user's explicit yes; leave changes in the working tree for review; approval covers only what was approved, unless the user says otherwise
+- [rules/branch-before-changes.md](rules/branch-before-changes.md) — Branch before changes: before changing files, work under git on a branch the user confirmed; propose a branch name (or, outside a repo, `git init -b main` + initial commit + branch) and wait for confirmation
 
 ### Full text (auto-imported — do not remove the lines below)
 
@@ -33,5 +35,7 @@ Claude sees their complete text in every new session — not just the one-line s
 - @~/.ai/rules/multi-point-messages.md
 - @~/.ai/rules/no-ai-attribution.md
 - @~/.ai/rules/present-state-only.md
+- @~/.ai/rules/no-commit-without-approval.md
+- @~/.ai/rules/branch-before-changes.md
 
 ---
