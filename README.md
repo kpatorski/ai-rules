@@ -67,6 +67,10 @@ these rules win over project-level rules.
 - [multi-point-messages](rules/multi-point-messages.md) — one point per line, never a wall of text.
 - [no-ai-attribution](rules/no-ai-attribution.md) — no mention of AI in commits or pull requests.
 - [present-state-only](rules/present-state-only.md) — deliverables state how things are now, not how they got there.
+- [no-commit-without-approval](rules/no-commit-without-approval.md) — no commit, push or pull request without the
+  user's yes.
+- [branch-before-changes](rules/branch-before-changes.md) — every change happens under git, on a branch the user
+  confirmed.
 
 ### Skills
 
